@@ -1,4 +1,4 @@
-OMNI84
+OMNI84 -- Incomplete game for Tandy Color Computer 1/2/3
 ==========
 
 ![](images/listing.jpg)
