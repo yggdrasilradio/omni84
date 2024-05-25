@@ -1,0 +1,1893 @@
+                      (       omni84.asm):00001         ************************* 
+                      (       omni84.asm):00002         * OMNISTAR - JUNE 1984  *
+                      (       omni84.asm):00003         * (C) COPYRIGHT 1984    *
+                      (       omni84.asm):00004         * BY RICK ADAMS.        *
+                      (       omni84.asm):00005         *************************
+     00B4             (       omni84.asm):00006         TIMER   EQU     180
+     00B5             (       omni84.asm):00007         ULROW   EQU     181
+     00B6             (       omni84.asm):00008         ULCOL   EQU     182
+     00B7             (       omni84.asm):00009         LRROW   EQU     183
+     00B8             (       omni84.asm):00010         LRCOL   EQU     184
+     00B9             (       omni84.asm):00011         CURROW  EQU     185
+     00BA             (       omni84.asm):00012         CURCOL  EQU     186
+     00BB             (       omni84.asm):00013         IRQTIM  EQU     187
+     00BC             (       omni84.asm):00014         WINDOW  EQU     188
+     00BD             (       omni84.asm):00015         NWINS   EQU     189
+     00BE             (       omni84.asm):00016         NODE    EQU     190
+     00BF             (       omni84.asm):00017         X1      EQU     191
+     00C0             (       omni84.asm):00018         Y1      EQU     192
+     00C1             (       omni84.asm):00019         X2      EQU     193
+     00C2             (       omni84.asm):00020         Y2      EQU     194
+     00C3             (       omni84.asm):00021         SCRN    EQU     195
+                      (       omni84.asm):00022         *UNUSED 197-199
+     00C8             (       omni84.asm):00023         BUFPTR  EQU     200
+     00CA             (       omni84.asm):00024         COUNT   EQU     202
+     00CB             (       omni84.asm):00025         VERB    EQU     203
+     00D1             (       omni84.asm):00026         OBJECT  EQU     209
+     00D7             (       omni84.asm):00027         SLIST   EQU     215
+                      (       omni84.asm):00028          
+                      (       omni84.asm):00029                 ORG     $3400
+3400                  (       omni84.asm):00030         WINTBL  RMB     9*10
+345A                  (       omni84.asm):00031         QUETBL  RMB     9*32
+357A                  (       omni84.asm):00032         BUFFER  RMB     40
+35A2                  (       omni84.asm):00033                 RMB     1
+35A3                  (       omni84.asm):00034         ULIST   RMB     10
+35AD                  (       omni84.asm):00035         SLISTS  RMB     20*11
+                      (       omni84.asm):00036                 
+                      (       omni84.asm):00037                 ORG     $3C00
+3C00 1A50             (       omni84.asm):00038         START   ORCC    #$50
+3C02 5F               (       omni84.asm):00039                 CLRB
+3C03 1F9B             (       omni84.asm):00040                 TFR     B,DP
+3C05 BDA9A2           (       omni84.asm):00041                 JSR     $A9A2
+3C08 BDA976           (       omni84.asm):00042                 JSR     $A976
+3C0B 86F8             (       omni84.asm):00043                 LDA     #$F8
+3C0D B7FF22           (       omni84.asm):00044                 STA     $FF22
+3C10 B7FFC5           (       omni84.asm):00045                 STA     $FFC5
+3C13 B7FFC3           (       omni84.asm):00046                 STA     $FFC3
+3C16 B7FFC0           (       omni84.asm):00047                 STA     $FFC0
+3C19 170EC9           (       omni84.asm):00048                 LBSR    BLDMAP
+3C1C 7F35A2           (       omni84.asm):00049                 CLR     ULIST-1
+3C1F 8614             (       omni84.asm):00050                 LDA     #20
+3C21 97BE             (       omni84.asm):00051                 STA     NODE
+3C23 170B38           (       omni84.asm):00052                 LBSR    ININIT
+3C26 170049           (       omni84.asm):00053                 LBSR    PCLS
+3C29 170417           (       omni84.asm):00054                 LBSR    WINIT
+3C2C 9ED7             (       omni84.asm):00055                 LDX     SLIST
+3C2E 8607             (       omni84.asm):00056                 LDA     #7
+3C30 17081E           (       omni84.asm):00057                 LBSR    LIST
+3C33 8601             (       omni84.asm):00058                 LDA     #1
+3C35 BAFF03           (       omni84.asm):00059                 ORA     $FF03
+3C38 B7FF03           (       omni84.asm):00060                 STA     $FF03
+                      (       omni84.asm):00061         *SET UP TEXT WINDOW
+3C3B 308DF93B         (       omni84.asm):00062                 LEAX    BUFFER,PCR
+3C3F 9FC8             (       omni84.asm):00063                 STX     BUFPTR
+3C41 0FCA             (       omni84.asm):00064                 CLR     COUNT
+3C43 8605             (       omni84.asm):00065                 LDA     #5
+3C45 97BC             (       omni84.asm):00066                 STA     WINDOW
+3C47 C60A             (       omni84.asm):00067                 LDB     #10
+3C49 3D               (       omni84.asm):00068                 MUL
+3C4A 338DF7B2         (       omni84.asm):00069                 LEAU    WINTBL,PCR
+3C4E 33CB             (       omni84.asm):00070                 LEAU    D,U
+3C50 ECC4             (       omni84.asm):00071                 LDD     ,U
+3C52 DDB5             (       omni84.asm):00072                 STD     ULROW
+3C54 EC42             (       omni84.asm):00073                 LDD     2,U
+3C56 DDB7             (       omni84.asm):00074                 STD     LRROW
+3C58 EC44             (       omni84.asm):00075                 LDD     4,U
+3C5A DDB9             (       omni84.asm):00076                 STD     CURROW
+3C5C 1706BD           (       omni84.asm):00077         AGAIN   LBSR    KEYIN
+3C5F 8103             (       omni84.asm):00078                 CMPA    #$03
+3C61 270C             (       omni84.asm):00079                 BEQ     QUIT
+3C63 810D             (       omni84.asm):00080                 CMPA    #$0D
+3C65 26F5             (       omni84.asm):00081                 BNE     AGAIN
+3C67 170715           (       omni84.asm):00082                 LBSR    PARSE
+3C6A 170751           (       omni84.asm):00083                 LBSR    DISP
+3C6D 20ED             (       omni84.asm):00084                 BRA     AGAIN
+3C6F 1A50             (       omni84.asm):00085         QUIT    ORCC    #$50
+3C71 3F               (       omni84.asm):00086                 SWI
+                      (       omni84.asm):00087         
+                      (       omni84.asm):00088         *CLEAR ENTIRE SCREEN
+                      (       omni84.asm):00089         *
+3C72 DEC3             (       omni84.asm):00090         PCLS    LDU     SCRN
+3C74 3420             (       omni84.asm):00091                 PSHS    Y
+3C76 31C91800         (       omni84.asm):00092                 LEAY    6144,U
+3C7A 3420             (       omni84.asm):00093                 PSHS    Y
+3C7C CCFFFF           (       omni84.asm):00094                 LDD     #-1
+3C7F EDC1             (       omni84.asm):00095         PCLS1   STD     ,U++
+3C81 EDC1             (       omni84.asm):00096                 STD     ,U++
+3C83 EDC1             (       omni84.asm):00097                 STD     ,U++
+3C85 EDC1             (       omni84.asm):00098                 STD     ,U++
+3C87 11A3E4           (       omni84.asm):00099                 CMPU    ,S
+3C8A 26F3             (       omni84.asm):00100                 BNE     PCLS1
+3C8C 3520             (       omni84.asm):00101                 PULS    Y
+3C8E 3520             (       omni84.asm):00102                 PULS    Y
+3C90 39               (       omni84.asm):00103                 RTS
+                      (       omni84.asm):00104         
+                      (       omni84.asm):00105         *OUTPUT TO WINDOW
+                      (       omni84.asm):00106         *       A=CHARACTER
+                      (       omni84.asm):00107         *
+3C91 3402             (       omni84.asm):00108         OUT     PSHS    A
+3C93 96BA             (       omni84.asm):00109                 LDA     CURCOL
+3C95 91B8             (       omni84.asm):00110                 CMPA    LRCOL
+3C97 2502             (       omni84.asm):00111                 BLO     OUTX
+3C99 8D06             (       omni84.asm):00112                 BSR     CR
+3C9B 3502             (       omni84.asm):00113         OUTX    PULS    A
+3C9D 810D             (       omni84.asm):00114                 CMPA    #$0D
+3C9F 2612             (       omni84.asm):00115                 BNE     OUT0
+                      (       omni84.asm):00116         *CARRIAGE RETURN
+3CA1 96B6             (       omni84.asm):00117         CR      LDA     ULCOL
+3CA3 97BA             (       omni84.asm):00118                 STA     CURCOL
+3CA5 96B9             (       omni84.asm):00119                 LDA     CURROW
+3CA7 8B08             (       omni84.asm):00120                 ADDA    #8
+3CA9 97B9             (       omni84.asm):00121                 STA     CURROW
+3CAB 91B7             (       omni84.asm):00122                 CMPA    LRROW
+3CAD 2303             (       omni84.asm):00123                 BLS     NOSCRL
+3CAF 170264           (       omni84.asm):00124                 LBSR    WSCROL
+3CB2 39               (       omni84.asm):00125         NOSCRL  RTS
+3CB3 8109             (       omni84.asm):00126         OUT0    CMPA    #$09
+3CB5 2611             (       omni84.asm):00127                 BNE     OUT1
+                      (       omni84.asm):00128         *TAB
+3CB7 96BA             (       omni84.asm):00129         TAB     LDA     CURCOL
+3CB9 8B40             (       omni84.asm):00130                 ADDA    #$40
+3CBB 84C0             (       omni84.asm):00131                 ANDA    #$C0
+3CBD 97BA             (       omni84.asm):00132                 STA     CURCOL
+3CBF 91B8             (       omni84.asm):00133                 CMPA    LRCOL
+3CC1 22DE             (       omni84.asm):00134                 BHI     CR
+3CC3 91B6             (       omni84.asm):00135                 CMPA    ULCOL
+3CC5 25DA             (       omni84.asm):00136                 BLO     CR
+3CC7 39               (       omni84.asm):00137                 RTS
+3CC8 8108             (       omni84.asm):00138         OUT1    CMPA    #$08
+3CCA 260B             (       omni84.asm):00139                 BNE     OUT2
+                      (       omni84.asm):00140         *BACKSPACE
+3CCC 96BA             (       omni84.asm):00141                 LDA     CURCOL
+3CCE 91B6             (       omni84.asm):00142                 CMPA    ULCOL
+3CD0 2304             (       omni84.asm):00143                 BLS     NOBS
+3CD2 8007             (       omni84.asm):00144                 SUBA    #7
+3CD4 97BA             (       omni84.asm):00145                 STA     CURCOL
+3CD6 39               (       omni84.asm):00146         NOBS    RTS
+3CD7 810C             (       omni84.asm):00147         OUT2    CMPA    #$0C
+3CD9 2604             (       omni84.asm):00148                 BNE     OUT3
+                      (       omni84.asm):00149         *CLEAR
+3CDB 1705BF           (       omni84.asm):00150                 LBSR    WCLEAR
+3CDE 39               (       omni84.asm):00151                 RTS
+3CDF 81FF             (       omni84.asm):00152         OUT3    CMPA    #$FF
+3CE1 2604             (       omni84.asm):00153                 BNE     OUT4
+                      (       omni84.asm):00154         *CENTER STRING
+3CE3 170601           (       omni84.asm):00155                 LBSR    CENTER
+3CE6 39               (       omni84.asm):00156                 RTS
+3CE7 338D00EB         (       omni84.asm):00157         OUT4    LEAU    ALPHA,PCR
+3CEB 8020             (       omni84.asm):00158                 SUBA    #$20
+3CED C605             (       omni84.asm):00159                 LDB     #5
+3CEF 3404             (       omni84.asm):00160                 PSHS    B
+3CF1 3D               (       omni84.asm):00161                 MUL
+3CF2 33CB             (       omni84.asm):00162                 LEAU    D,U
+3CF4 9EB9             (       omni84.asm):00163         LOOP0   LDX     CURROW
+3CF6 6AE4             (       omni84.asm):00164                 DEC     ,S
+3CF8 2D3A             (       omni84.asm):00165                 BLT     DONE
+3CFA 1F10             (       omni84.asm):00166                 TFR     X,D
+3CFC 3406             (       omni84.asm):00167                 PSHS    D
+3CFE 44               (       omni84.asm):00168                 LSRA
+3CFF 56               (       omni84.asm):00169                 RORB
+3D00 44               (       omni84.asm):00170                 LSRA
+3D01 56               (       omni84.asm):00171                 RORB
+3D02 44               (       omni84.asm):00172                 LSRA
+3D03 56               (       omni84.asm):00173                 RORB
+3D04 D3C3             (       omni84.asm):00174                 ADDD    SCRN
+3D06 830020           (       omni84.asm):00175                 SUBD    #32
+3D09 1F01             (       omni84.asm):00176                 TFR     D,X
+3D0B 318D002E         (       omni84.asm):00177                 LEAY    BITBL,PCR
+3D0F ECE4             (       omni84.asm):00178                 LDD     ,S
+3D11 C407             (       omni84.asm):00179                 ANDB    #7
+3D13 E6A5             (       omni84.asm):00180                 LDB     B,Y
+3D15 53               (       omni84.asm):00181                 COMB
+3D16 3404             (       omni84.asm):00182                 PSHS    B
+3D18 A6C0             (       omni84.asm):00183                 LDA     ,U+
+3D1A 44               (       omni84.asm):00184                 LSRA
+3D1B 48               (       omni84.asm):00185         LOOP    LSLA
+3D1C 308820           (       omni84.asm):00186                 LEAX    32,X
+3D1F 4D               (       omni84.asm):00187                 TSTA
+3D20 2EF9             (       omni84.asm):00188                 BGT     LOOP
+3D22 2708             (       omni84.asm):00189                 BEQ     DONE0
+3D24 E684             (       omni84.asm):00190                 LDB     ,X
+3D26 E4E4             (       omni84.asm):00191                 ANDB    ,S
+3D28 E784             (       omni84.asm):00192                 STB     ,X
+3D2A 20EF             (       omni84.asm):00193                 BRA     LOOP
+3D2C 3504             (       omni84.asm):00194         DONE0   PULS    B
+3D2E 3510             (       omni84.asm):00195                 PULS    X
+3D30 0CBA             (       omni84.asm):00196                 INC     CURCOL
+3D32 20C0             (       omni84.asm):00197                 BRA     LOOP0
+3D34 3502             (       omni84.asm):00198         DONE    PULS    A
+3D36 96BA             (       omni84.asm):00199                 LDA     CURCOL
+3D38 8B02             (       omni84.asm):00200                 ADDA    #2
+3D3A 97BA             (       omni84.asm):00201                 STA     CURCOL
+3D3C 39               (       omni84.asm):00202         XOUT    RTS
+                      (       omni84.asm):00203         
+3D3D 8040             (       omni84.asm):00204         BITBL   FDB     $8040
+3D3F 2010             (       omni84.asm):00205                 FDB     $2010
+3D41 0804             (       omni84.asm):00206                 FDB     $0804
+3D43 0201             (       omni84.asm):00207                 FDB     $0201
+                      (       omni84.asm):00208         
+                      (       omni84.asm):00209         *ERASE ONE CHARACTER
+                      (       omni84.asm):00210         *
+3D45 9EB9             (       omni84.asm):00211         ERASE   LDX     CURROW
+3D47 3410             (       omni84.asm):00212                 PSHS    X
+3D49 C605             (       omni84.asm):00213                 LDB     #5
+3D4B 3404             (       omni84.asm):00214                 PSHS    B
+3D4D 318CED           (       omni84.asm):00215                 LEAY    BITBL,PCR
+3D50 6AE4             (       omni84.asm):00216         ERAS0   DEC     ,S
+3D52 2D26             (       omni84.asm):00217                 BLT     XERAS
+3D54 1F10             (       omni84.asm):00218                 TFR     X,D
+3D56 C407             (       omni84.asm):00219                 ANDB    #7
+3D58 E6A5             (       omni84.asm):00220                 LDB     B,Y
+3D5A 3404             (       omni84.asm):00221                 PSHS    B
+3D5C 1F10             (       omni84.asm):00222                 TFR     X,D
+3D5E 44               (       omni84.asm):00223                 LSRA
+3D5F 56               (       omni84.asm):00224                 RORB
+3D60 44               (       omni84.asm):00225                 LSRA
+3D61 56               (       omni84.asm):00226                 RORB
+3D62 44               (       omni84.asm):00227                 LSRA
+3D63 56               (       omni84.asm):00228                 RORB
+3D64 D3C3             (       omni84.asm):00229                 ADDD    SCRN
+3D66 1F03             (       omni84.asm):00230                 TFR     D,U
+3D68 3504             (       omni84.asm):00231                 PULS    B
+3D6A 170012           (       omni84.asm):00232                 LBSR    ERAS1
+3D6D 17000F           (       omni84.asm):00233                 LBSR    ERAS1
+3D70 17000C           (       omni84.asm):00234                 LBSR    ERAS1
+3D73 17000B           (       omni84.asm):00235                 LBSR    ERAS2
+3D76 3001             (       omni84.asm):00236                 LEAX    1,X
+3D78 20D6             (       omni84.asm):00237                 BRA     ERAS0
+3D7A 3502             (       omni84.asm):00238         XERAS   PULS    A
+3D7C 3510             (       omni84.asm):00239                 PULS    X
+3D7E 39               (       omni84.asm):00240                 RTS
+3D7F 8D00             (       omni84.asm):00241         ERAS1   BSR     ERAS2
+3D81 1F98             (       omni84.asm):00242         ERAS2   TFR     B,A
+3D83 AAC4             (       omni84.asm):00243                 ORA     ,U
+3D85 A7C4             (       omni84.asm):00244                 STA     ,U
+3D87 33C820           (       omni84.asm):00245                 LEAU    32,U
+3D8A 39               (       omni84.asm):00246                 RTS
+                      (       omni84.asm):00247         
+                      (       omni84.asm):00248         *DISPLAY CURSOR
+                      (       omni84.asm):00249         *
+3D8B 338D0007         (       omni84.asm):00250         CURSOR  LEAU    CURS,PCR
+3D8F C605             (       omni84.asm):00251                 LDB     #5
+3D91 3404             (       omni84.asm):00252                 PSHS    B
+3D93 16FF5E           (       omni84.asm):00253                 LBRA    LOOP0
+                      (       omni84.asm):00254         
+3D96 007C             (       omni84.asm):00255         CURS    FDB     $007C
+3D98 7C7C             (       omni84.asm):00256                 FDB     $7C7C
+3D9A 0000             (       omni84.asm):00257                 FDB     $00
+                      (       omni84.asm):00258         
+                      (       omni84.asm):00259         *SCROLL ENTIRE SCREEN
+                      (       omni84.asm):00260         *
+3D9C 7DFF02           (       omni84.asm):00261         PSCROL  TST     $FF02
+3D9F 7DFF03           (       omni84.asm):00262         W0      TST     $FF03
+3DA2 2CFB             (       omni84.asm):00263                 BGE     W0
+3DA4 DEC3             (       omni84.asm):00264                 LDU     SCRN
+3DA6 31C90100         (       omni84.asm):00265                 LEAY    256,U
+3DAA ECA1             (       omni84.asm):00266         SCROL0  LDD     ,Y++
+3DAC EDC1             (       omni84.asm):00267                 STD     ,U++
+3DAE ECA1             (       omni84.asm):00268                 LDD     ,Y++
+3DB0 EDC1             (       omni84.asm):00269                 STD     ,U++
+3DB2 ECA1             (       omni84.asm):00270                 LDD     ,Y++
+3DB4 EDC1             (       omni84.asm):00271                 STD     ,U++
+3DB6 ECA1             (       omni84.asm):00272                 LDD     ,Y++
+3DB8 EDC1             (       omni84.asm):00273                 STD     ,U++
+3DBA 108C1C00         (       omni84.asm):00274                 CMPY    #$1C00
+3DBE 2DEA             (       omni84.asm):00275                 BLT     SCROL0
+3DC0 CCFFFF           (       omni84.asm):00276                 LDD     #-1
+3DC3 EDA3             (       omni84.asm):00277         SCROL1  STD     ,--Y
+3DC5 108C1B00         (       omni84.asm):00278                 CMPY    #$1B00
+3DC9 2EF8             (       omni84.asm):00279                 BGT     SCROL1
+3DCB 96B9             (       omni84.asm):00280                 LDA     CURROW
+3DCD 8008             (       omni84.asm):00281                 SUBA    #8
+3DCF 97B9             (       omni84.asm):00282                 STA     CURROW
+3DD1 96B6             (       omni84.asm):00283                 LDA     ULCOL
+3DD3 97BA             (       omni84.asm):00284                 STA     CURCOL
+3DD5 39               (       omni84.asm):00285                 RTS
+                      (       omni84.asm):00286         
+3DD6                  (       omni84.asm):00287         ALPHA
+3DD6 0000             (       omni84.asm):00288                 FDB     $0000
+3DD8 0000             (       omni84.asm):00289                 FDB     $0000
+3DDA 00               (       omni84.asm):00290                 FCB     $00
+3DDB 00FA             (       omni84.asm):00291                 FDB     $00FA !
+3DDD FA00             (       omni84.asm):00292                 FDB     $FA00
+3DDF 00               (       omni84.asm):00293                 FCB     $00
+3DE0 00C0             (       omni84.asm):00294                 FDB     $00C0 "
+3DE2 00C0             (       omni84.asm):00295                 FDB     $00C0
+3DE4 00               (       omni84.asm):00296                 FCB     $00
+3DE5 28FE             (       omni84.asm):00297                 FDB     $28FE #
+3DE7 28FE             (       omni84.asm):00298                 FDB     $28FE
+3DE9 28               (       omni84.asm):00299                 FCB     $28
+3DEA 2454             (       omni84.asm):00300                 FDB     $2454 $
+3DEC FE54             (       omni84.asm):00301                 FDB     $FE54
+3DEE 48               (       omni84.asm):00302                 FCB     $48
+3DEF 4608             (       omni84.asm):00303                 FDB     $4608 %
+3DF1 1020             (       omni84.asm):00304                 FDB     $1020
+3DF3 C4               (       omni84.asm):00305                 FCB     $C4
+3DF4 046A             (       omni84.asm):00306                 FDB     $046A &
+3DF6 926C             (       omni84.asm):00307                 FDB     $926C
+3DF8 0A               (       omni84.asm):00308                 FCB     $0A
+3DF9 0000             (       omni84.asm):00309                 FDB     $0000 '
+3DFB 20C0             (       omni84.asm):00310                 FDB     $20C0
+3DFD 00               (       omni84.asm):00311                 FCB     $00
+3DFE 0038             (       omni84.asm):00312                 FDB     $0038 (
+3E00 4482             (       omni84.asm):00313                 FDB     $4482
+3E02 00               (       omni84.asm):00314                 FCB     $00
+3E03 0082             (       omni84.asm):00315                 FDB     $0082 )
+3E05 4438             (       omni84.asm):00316                 FDB     $4438
+3E07 00               (       omni84.asm):00317                 FCB     $00
+3E08 5438             (       omni84.asm):00318                 FDB     $5438 *
+3E0A FE38             (       omni84.asm):00319                 FDB     $FE38
+3E0C 54               (       omni84.asm):00320                 FCB     $54
+3E0D 1010             (       omni84.asm):00321                 FDB     $1010 +
+3E0F 7C10             (       omni84.asm):00322                 FDB     $7C10
+3E11 10               (       omni84.asm):00323                 FCB     $10
+3E12 0000             (       omni84.asm):00324                 FDB     $0000 ,
+3E14 020C             (       omni84.asm):00325                 FDB     $020C
+3E16 00               (       omni84.asm):00326                 FCB     $00
+3E17 1010             (       omni84.asm):00327                 FDB     $1010 -
+3E19 1010             (       omni84.asm):00328                 FDB     $1010
+3E1B 10               (       omni84.asm):00329                 FCB     $10
+3E1C 0000             (       omni84.asm):00330                 FDB     $0000 .
+3E1E 0200             (       omni84.asm):00331                 FDB     $0200
+3E20 00               (       omni84.asm):00332                 FCB     $00
+3E21 0608             (       omni84.asm):00333                 FDB     $0608 /
+3E23 1020             (       omni84.asm):00334                 FDB     $1020
+3E25 C0               (       omni84.asm):00335                 FCB     $C0
+3E26 6C82             (       omni84.asm):00336                 FDB     $6C82 0
+3E28 8282             (       omni84.asm):00337                 FDB     $8282
+3E2A 6C               (       omni84.asm):00338                 FCB     $6C
+3E2B 0000             (       omni84.asm):00339                 FDB     $0000 1
+3E2D 0000             (       omni84.asm):00340                 FDB     $0000
+3E2F EE               (       omni84.asm):00341                 FCB     $EE
+3E30 0C92             (       omni84.asm):00342                 FDB     $0C92 2
+3E32 9292             (       omni84.asm):00343                 FDB     $9292
+3E34 60               (       omni84.asm):00344                 FCB     $60
+3E35 0092             (       omni84.asm):00345                 FDB     $0092 3
+3E37 9292             (       omni84.asm):00346                 FDB     $9292
+3E39 6C               (       omni84.asm):00347                 FCB     $6C
+3E3A E010             (       omni84.asm):00348                 FDB     $E010 4
+3E3C 1010             (       omni84.asm):00349                 FDB     $1010
+3E3E EE               (       omni84.asm):00350                 FCB     $EE
+3E3F 6092             (       omni84.asm):00351                 FDB     $6092 5
+3E41 9292             (       omni84.asm):00352                 FDB     $9292
+3E43 0C               (       omni84.asm):00353                 FCB     $0C
+3E44 6C92             (       omni84.asm):00354                 FDB     $6C92 6
+3E46 9292             (       omni84.asm):00355                 FDB     $9292
+3E48 0C               (       omni84.asm):00356                 FCB     $0C
+3E49 0080             (       omni84.asm):00357                 FDB     $0080 7
+3E4B 8080             (       omni84.asm):00358                 FDB     $8080
+3E4D 6C               (       omni84.asm):00359                 FCB     $6C
+3E4E 6C92             (       omni84.asm):00360                 FDB     $6C92 8
+3E50 9292             (       omni84.asm):00361                 FDB     $9292
+3E52 6C               (       omni84.asm):00362                 FCB     $6C
+3E53 6092             (       omni84.asm):00363                 FDB     $6092 9
+3E55 9292             (       omni84.asm):00364                 FDB     $9292
+3E57 6C               (       omni84.asm):00365                 FCB     $6C
+3E58 0000             (       omni84.asm):00366                 FDB     $0000 :
+3E5A 2400             (       omni84.asm):00367                 FDB     $2400
+3E5C 00               (       omni84.asm):00368                 FCB     $00
+3E5D 0002             (       omni84.asm):00369                 FDB     $0002 ;
+3E5F 2400             (       omni84.asm):00370                 FDB     $2400
+3E61 00               (       omni84.asm):00371                 FCB     $00
+3E62 0010             (       omni84.asm):00372                 FDB     $0010 <
+3E64 2844             (       omni84.asm):00373                 FDB     $2844
+3E66 00               (       omni84.asm):00374                 FCB     $00
+3E67 2828             (       omni84.asm):00375                 FDB     $2828 =
+3E69 2828             (       omni84.asm):00376                 FDB     $2828
+3E6B 28               (       omni84.asm):00377                 FCB     $28
+3E6C 0044             (       omni84.asm):00378                 FDB     $0044 >
+3E6E 2810             (       omni84.asm):00379                 FDB     $2810
+3E70 00               (       omni84.asm):00380                 FCB     $00
+3E71 4080             (       omni84.asm):00381                 FDB     $4080 ?
+3E73 8A90             (       omni84.asm):00382                 FDB     $8A90
+3E75 60               (       omni84.asm):00383                 FCB     $60
+3E76 7C82             (       omni84.asm):00384                 FDB     $7C82 @
+3E78 BAAA             (       omni84.asm):00385                 FDB     $BAAA
+3E7A 78               (       omni84.asm):00386                 FCB     $78
+3E7B 0EFE             (       omni84.asm):00387                 FDB     $0EFE A
+3E7D 9090             (       omni84.asm):00388                 FDB     $9090
+3E7F FE               (       omni84.asm):00389                 FCB     $FE
+3E80 FE92             (       omni84.asm):00390                 FDB     $FE92 B
+3E82 92FE             (       omni84.asm):00391                 FDB     $92FE
+3E84 0E               (       omni84.asm):00392                 FCB     $0E
+3E85 FE82             (       omni84.asm):00393                 FDB     $FE82 C
+3E87 82E2             (       omni84.asm):00394                 FDB     $82E2
+3E89 E6               (       omni84.asm):00395                 FCB     $E6
+3E8A FEFE             (       omni84.asm):00396                 FDB     $FEFE D
+3E8C 8282             (       omni84.asm):00397                 FDB     $8282
+3E8E 7C               (       omni84.asm):00398                 FCB     $7C
+3E8F FE9E             (       omni84.asm):00399                 FDB     $FE9E E
+3E91 9292             (       omni84.asm):00400                 FDB     $9292
+3E93 92               (       omni84.asm):00401                 FCB     $92
+3E94 FEF0             (       omni84.asm):00402                 FDB     $FEF0 F
+3E96 9090             (       omni84.asm):00403                 FDB     $9090
+3E98 90               (       omni84.asm):00404                 FCB     $90
+3E99 FE82             (       omni84.asm):00405                 FDB     $FE82 G
+3E9B 82D2             (       omni84.asm):00406                 FDB     $82D2
+3E9D DE               (       omni84.asm):00407                 FCB     $DE
+3E9E FE10             (       omni84.asm):00408                 FDB     $FE10 H
+3EA0 10FE             (       omni84.asm):00409                 FDB     $10FE
+3EA2 0E               (       omni84.asm):00410                 FCB     $0E
+3EA3 000E             (       omni84.asm):00411                 FDB     $000E I
+3EA5 FE00             (       omni84.asm):00412                 FDB     $FE00
+3EA7 00               (       omni84.asm):00413                 FCB     $00
+3EA8 0C0E             (       omni84.asm):00414                 FDB     $0C0E J
+3EAA 0202             (       omni84.asm):00415                 FDB     $0202
+3EAC FC               (       omni84.asm):00416                 FCB     $FC
+3EAD FEFE             (       omni84.asm):00417                 FDB     $FEFE K
+3EAF 1028             (       omni84.asm):00418                 FDB     $1028
+3EB1 C6               (       omni84.asm):00419                 FCB     $C6
+3EB2 0EFE             (       omni84.asm):00420                 FDB     $0EFE L
+3EB4 0202             (       omni84.asm):00421                 FDB     $0202
+3EB6 02               (       omni84.asm):00422                 FCB     $02
+3EB7 FE40             (       omni84.asm):00423                 FDB     $FE40 M
+3EB9 2040             (       omni84.asm):00424                 FDB     $2040
+3EBB FE               (       omni84.asm):00425                 FCB     $FE
+3EBC FE40             (       omni84.asm):00426                 FDB     $FE40 N
+3EBE 2010             (       omni84.asm):00427                 FDB     $2010
+3EC0 FE               (       omni84.asm):00428                 FCB     $FE
+3EC1 FE82             (       omni84.asm):00429                 FDB     $FE82 O
+3EC3 828E             (       omni84.asm):00430                 FDB     $828E
+3EC5 FE               (       omni84.asm):00431                 FCB     $FE
+3EC6 FE9E             (       omni84.asm):00432                 FDB     $FE9E P
+3EC8 9090             (       omni84.asm):00433                 FDB     $9090
+3ECA 60               (       omni84.asm):00434                 FCB     $60
+3ECB 7C82             (       omni84.asm):00435                 FDB     $7C82 Q
+3ECD 8A84             (       omni84.asm):00436                 FDB     $8A84
+3ECF 7A               (       omni84.asm):00437                 FCB     $7A
+3ED0 FE90             (       omni84.asm):00438                 FDB     $FE90 R
+3ED2 90FE             (       omni84.asm):00439                 FDB     $90FE
+3ED4 0E               (       omni84.asm):00440                 FCB     $0E
+3ED5 F696             (       omni84.asm):00441                 FDB     $F696 S
+3ED7 9292             (       omni84.asm):00442                 FDB     $9292
+3ED9 DE               (       omni84.asm):00443                 FCB     $DE
+3EDA 8080             (       omni84.asm):00444                 FDB     $8080 T
+3EDC FEFE             (       omni84.asm):00445                 FDB     $FEFE
+3EDE 80               (       omni84.asm):00446                 FCB     $80
+3EDF FC02             (       omni84.asm):00447                 FDB     $FC02 U
+3EE1 02FE             (       omni84.asm):00448                 FDB     $02FE
+3EE3 FC               (       omni84.asm):00449                 FCB     $FC
+3EE4 F804             (       omni84.asm):00450                 FDB     $F804 V
+3EE6 02FC             (       omni84.asm):00451                 FDB     $02FC
+3EE8 F8               (       omni84.asm):00452                 FCB     $F8
+3EE9 FE04             (       omni84.asm):00453                 FDB     $FE04 W
+3EEB 0804             (       omni84.asm):00454                 FDB     $0804
+3EED FE               (       omni84.asm):00455                 FCB     $FE
+3EEE C628             (       omni84.asm):00456                 FDB     $C628 X
+3EF0 1028             (       omni84.asm):00457                 FDB     $1028
+3EF2 C6               (       omni84.asm):00458                 FCB     $C6
+3EF3 E010             (       omni84.asm):00459                 FDB     $E010 Y
+3EF5 0E10             (       omni84.asm):00460                 FDB     $0E10
+3EF7 E0               (       omni84.asm):00461                 FCB     $E0
+3EF8 868A             (       omni84.asm):00462                 FDB     $868A Z
+3EFA 92A2             (       omni84.asm):00463                 FDB     $92A2
+3EFC C2               (       omni84.asm):00464                 FCB     $C2
+3EFD 00FE             (       omni84.asm):00465                 FDB     $00FE [
+3EFF 8282             (       omni84.asm):00466                 FDB     $8282
+3F01 00               (       omni84.asm):00467                 FCB     $00
+3F02 C020             (       omni84.asm):00468                 FDB     $C020 \
+3F04 1008             (       omni84.asm):00469                 FDB     $1008
+3F06 06               (       omni84.asm):00470                 FCB     $06
+3F07 0082             (       omni84.asm):00471                 FDB     $0082 ]
+3F09 82FE             (       omni84.asm):00472                 FDB     $82FE
+3F0B 00               (       omni84.asm):00473                 FCB     $00
+3F0C 2040             (       omni84.asm):00474                 FDB     $2040 ^
+3F0E FE40             (       omni84.asm):00475                 FDB     $FE40
+3F10 20               (       omni84.asm):00476                 FCB     $20
+3F11 0202             (       omni84.asm):00477                 FDB     $0202
+3F13 0202             (       omni84.asm):00478                 FDB     $0202
+3F15 02               (       omni84.asm):00479                 FCB     $02
+                      (       omni84.asm):00480         
+                      (       omni84.asm):00481         *SCROLL WINDOW
+                      (       omni84.asm):00482         *
+3F16 DCB5             (       omni84.asm):00483         WSCROL  LDD     ULROW
+3F18 44               (       omni84.asm):00484                 LSRA
+3F19 56               (       omni84.asm):00485                 RORB
+3F1A 44               (       omni84.asm):00486                 LSRA
+3F1B 56               (       omni84.asm):00487                 RORB
+3F1C 44               (       omni84.asm):00488                 LSRA
+3F1D 56               (       omni84.asm):00489                 RORB
+3F1E D3C3             (       omni84.asm):00490                 ADDD    SCRN
+3F20 1F01             (       omni84.asm):00491                 TFR     D,X
+3F22 30890100         (       omni84.asm):00492                 LEAX    256,X
+3F26 96B5             (       omni84.asm):00493                 LDA     ULROW
+3F28 D6B8             (       omni84.asm):00494                 LDB     LRCOL
+3F2A 44               (       omni84.asm):00495                 LSRA
+3F2B 56               (       omni84.asm):00496                 RORB
+3F2C 44               (       omni84.asm):00497                 LSRA
+3F2D 56               (       omni84.asm):00498                 RORB
+3F2E 44               (       omni84.asm):00499                 LSRA
+3F2F 56               (       omni84.asm):00500                 RORB
+3F30 D3C3             (       omni84.asm):00501                 ADDD    SCRN
+3F32 1F02             (       omni84.asm):00502                 TFR     D,Y
+3F34 31A90100         (       omni84.asm):00503                 LEAY    256,Y
+                      (       omni84.asm):00504         *FUDGE
+3F38 3121             (       omni84.asm):00505                 LEAY    1,Y
+3F3A 96B7             (       omni84.asm):00506                 LDA     LRROW
+3F3C D6B6             (       omni84.asm):00507                 LDB     ULCOL
+3F3E 44               (       omni84.asm):00508                 LSRA
+3F3F 56               (       omni84.asm):00509                 RORB
+3F40 44               (       omni84.asm):00510                 LSRA
+3F41 56               (       omni84.asm):00511                 RORB
+3F42 44               (       omni84.asm):00512                 LSRA
+3F43 56               (       omni84.asm):00513                 RORB
+3F44 D3C3             (       omni84.asm):00514                 ADDD    SCRN
+3F46 1F03             (       omni84.asm):00515                 TFR     D,U
+3F48 33C90100         (       omni84.asm):00516                 LEAU    256,U
+3F4C 3440             (       omni84.asm):00517                 PSHS    U
+3F4E 3420             (       omni84.asm):00518         S1      PSHS    Y
+3F50 1F13             (       omni84.asm):00519                 TFR     X,U
+3F52 ECC1             (       omni84.asm):00520         S2      LDD     ,U++
+3F54 EDC9FEFE         (       omni84.asm):00521                 STD     -258,U
+3F58 11A3E4           (       omni84.asm):00522                 CMPU    ,S
+3F5B 25F5             (       omni84.asm):00523                 BLO     S2
+3F5D 3520             (       omni84.asm):00524                 PULS    Y
+3F5F 308820           (       omni84.asm):00525                 LEAX    32,X
+3F62 31A820           (       omni84.asm):00526                 LEAY    32,Y
+3F65 ACE4             (       omni84.asm):00527                 CMPX    ,S
+3F67 25E5             (       omni84.asm):00528                 BLO     S1
+3F69 3089FF00         (       omni84.asm):00529                 LEAX    -256,X
+3F6D 31A9FF00         (       omni84.asm):00530                 LEAY    -256,Y
+3F71 86FF             (       omni84.asm):00531                 LDA     #-1
+3F73 3420             (       omni84.asm):00532         S3      PSHS    Y
+3F75 1F13             (       omni84.asm):00533                 TFR     X,U
+3F77 A7C0             (       omni84.asm):00534         S4      STA     ,U+
+3F79 11A3E4           (       omni84.asm):00535                 CMPU    ,S
+3F7C 25F9             (       omni84.asm):00536                 BLO     S4
+3F7E 3520             (       omni84.asm):00537                 PULS    Y
+3F80 308820           (       omni84.asm):00538                 LEAX    32,X
+3F83 31A820           (       omni84.asm):00539                 LEAY    32,Y
+3F86 ACE4             (       omni84.asm):00540                 CMPX    ,S
+3F88 25E9             (       omni84.asm):00541                 BLO     S3
+3F8A 3540             (       omni84.asm):00542                 PULS    U
+3F8C 96B6             (       omni84.asm):00543                 LDA     ULCOL
+3F8E 97BA             (       omni84.asm):00544                 STA     CURCOL
+3F90 96B9             (       omni84.asm):00545                 LDA     CURROW
+3F92 8008             (       omni84.asm):00546                 SUBA    #8
+3F94 97B9             (       omni84.asm):00547                 STA     CURROW
+3F96 39               (       omni84.asm):00548                 RTS
+                      (       omni84.asm):00549         
+                      (       omni84.asm):00550         *PRINT MESSAGE
+                      (       omni84.asm):00551         *       U=MESSAGE
+                      (       omni84.asm):00552         *
+3F97 3440             (       omni84.asm):00553         MSG     PSHS    U
+3F99 EEE4             (       omni84.asm):00554         MSG0    LDU     ,S
+3F9B A6C0             (       omni84.asm):00555                 LDA     ,U+
+3F9D 270C             (       omni84.asm):00556                 BEQ     XMSG
+3F9F EFE4             (       omni84.asm):00557                 STU     ,S
+3FA1 8E2000           (       omni84.asm):00558                 LDX     #$2000
+3FA4 301F             (       omni84.asm):00559         DELAY   LEAX    -1,X
+                      (       omni84.asm):00560         *       BNE     DELAY
+3FA6 17FCE8           (       omni84.asm):00561                 LBSR    OUT
+3FA9 20EE             (       omni84.asm):00562                 BRA     MSG0
+3FAB 3540             (       omni84.asm):00563         XMSG    PULS    U
+3FAD 39               (       omni84.asm):00564                 RTS
+                      (       omni84.asm):00565         
+                      (       omni84.asm):00566         *INTERRUPT SERVICER
+                      (       omni84.asm):00567         *
+3FAE B6FF03           (       omni84.asm):00568         IRQ     LDA     $FF03
+3FB1 2A78             (       omni84.asm):00569                 BPL     XIRQ
+3FB3 B6FF02           (       omni84.asm):00570                 LDA     $FF02
+3FB6 0ABB             (       omni84.asm):00571                 DEC     IRQTIM
+3FB8 2671             (       omni84.asm):00572                 BNE     XIRQ
+3FBA DCB5             (       omni84.asm):00573                 LDD     ULROW
+3FBC 3406             (       omni84.asm):00574                 PSHS    D
+3FBE DCB7             (       omni84.asm):00575                 LDD     LRROW
+3FC0 3406             (       omni84.asm):00576                 PSHS    D
+3FC2 DCB9             (       omni84.asm):00577                 LDD     CURROW
+3FC4 3406             (       omni84.asm):00578                 PSHS    D
+3FC6 8604             (       omni84.asm):00579                 LDA     #4
+3FC8 97BB             (       omni84.asm):00580                 STA     IRQTIM
+3FCA 96BD             (       omni84.asm):00581                 LDA     NWINS
+3FCC 3402             (       omni84.asm):00582                 PSHS    A
+3FCE CE33F6           (       omni84.asm):00583                 LDU     #WINTBL-10
+3FD1 6AE4             (       omni84.asm):00584         IRQ0    DEC     ,S
+3FD3 2D48             (       omni84.asm):00585                 BLT     XIRQ0
+3FD5 334A             (       omni84.asm):00586                 LEAU    10,U
+3FD7 AED806           (       omni84.asm):00587                 LDX     [6,U]
+3FDA 27F5             (       omni84.asm):00588                 BEQ     IRQ0
+                      (       omni84.asm):00589         *ESTABLISH CURRENT WINDOW
+3FDC ECC4             (       omni84.asm):00590                 LDD     ,U
+3FDE DDB5             (       omni84.asm):00591                 STD     ULROW
+3FE0 EC42             (       omni84.asm):00592                 LDD     2,U
+3FE2 DDB7             (       omni84.asm):00593                 STD     LRROW
+3FE4 EC44             (       omni84.asm):00594                 LDD     4,U
+3FE6 DDB9             (       omni84.asm):00595                 STD     CURROW
+3FE8 A680             (       omni84.asm):00596                 LDA     ,X+
+3FEA 2713             (       omni84.asm):00597                 BEQ     IRQ1
+                      (       omni84.asm):00598         *OUTPUT CHARACTER
+3FEC AFD806           (       omni84.asm):00599                 STX     [6,U]
+3FEF 3440             (       omni84.asm):00600                 PSHS    U
+3FF1 1701CF           (       omni84.asm):00601                 LBSR    BEEP
+3FF4 17FC9A           (       omni84.asm):00602                 LBSR    OUT
+3FF7 3540             (       omni84.asm):00603                 PULS    U
+                      (       omni84.asm):00604         *UPDATE CURRENT WINDOW
+3FF9 DCB9             (       omni84.asm):00605                 LDD     CURROW
+3FFB ED44             (       omni84.asm):00606                 STD     4,U
+3FFD 20D2             (       omni84.asm):00607                 BRA     IRQ0
+                      (       omni84.asm):00608         *END OF MESSAGE
+3FFF EC48             (       omni84.asm):00609         IRQ1    LDD     8,U
+4001 830002           (       omni84.asm):00610                 SUBD    #2
+4004 ED48             (       omni84.asm):00611                 STD     8,U
+4006 108E0008         (       omni84.asm):00612                 LDY     #8
+400A AE46             (       omni84.asm):00613                 LDX     6,U
+400C 313F             (       omni84.asm):00614         IRQ2    LEAY    -1,Y
+400E 2706             (       omni84.asm):00615                 BEQ     XIRQ2
+4010 EC02             (       omni84.asm):00616                 LDD     2,X
+4012 ED81             (       omni84.asm):00617                 STD     ,X++
+4014 20F6             (       omni84.asm):00618                 BRA     IRQ2
+4016 CC0000           (       omni84.asm):00619         XIRQ2   LDD     #0
+4019 ED84             (       omni84.asm):00620                 STD     ,X
+401B 20B4             (       omni84.asm):00621                 BRA     IRQ0
+401D 3502             (       omni84.asm):00622         XIRQ0   PULS    A
+401F 3506             (       omni84.asm):00623                 PULS    D
+4021 DDB9             (       omni84.asm):00624                 STD     CURROW
+4023 3506             (       omni84.asm):00625                 PULS    D
+4025 DDB7             (       omni84.asm):00626                 STD     LRROW
+4027 3506             (       omni84.asm):00627                 PULS    D
+4029 DDB5             (       omni84.asm):00628                 STD     ULROW
+402B 3B               (       omni84.asm):00629         XIRQ    RTI
+                      (       omni84.asm):00630         
+                      (       omni84.asm):00631         *PRINT INTO WINDOW
+                      (       omni84.asm):00632         *       A=WINDOW (0-7)
+                      (       omni84.asm):00633         *       X=MESSAGE
+402C CE3400           (       omni84.asm):00634         PRINT   LDU     #WINTBL
+402F C60A             (       omni84.asm):00635                 LDB     #10
+4031 3D               (       omni84.asm):00636                 MUL
+4032 33CB             (       omni84.asm):00637                 LEAU    D,U
+4034 1A10             (       omni84.asm):00638                 ORCC    #$10
+4036 AFD808           (       omni84.asm):00639                 STX     [8,U]
+4039 EC48             (       omni84.asm):00640                 LDD     8,U
+403B C30002           (       omni84.asm):00641                 ADDD    #2
+403E ED48             (       omni84.asm):00642                 STD     8,U
+4040 1CEF             (       omni84.asm):00643                 ANDCC   #$EF
+4042 39               (       omni84.asm):00644                 RTS
+                      (       omni84.asm):00645         
+                      (       omni84.asm):00646         *INITIALIZE WINDOWS
+                      (       omni84.asm):00647         *
+4043 1A10             (       omni84.asm):00648         WINIT   ORCC    #$10
+4045 0FBD             (       omni84.asm):00649                 CLR     NWINS
+4047 8604             (       omni84.asm):00650                 LDA     #4
+4049 97BB             (       omni84.asm):00651                 STA     IRQTIM
+404B FC40BA           (       omni84.asm):00652                 LDD     HOOK
+404E FD010C           (       omni84.asm):00653                 STD     $10C
+4051 B640BC           (       omni84.asm):00654                 LDA     HOOK+2
+4054 B740BC           (       omni84.asm):00655                 STA     HOOK+2
+4057 B7010E           (       omni84.asm):00656                 STA     $10E
+405A 308D005F         (       omni84.asm):00657                 LEAX    WDATA,PCR
+405E 108E345A         (       omni84.asm):00658                 LDY     #QUETBL
+4062 CE3400           (       omni84.asm):00659                 LDU     #WINTBL
+4065 A680             (       omni84.asm):00660         WINIT0  LDA     ,X+
+4067 2D3B             (       omni84.asm):00661                 BLT     XWINIT
+4069 0CBD             (       omni84.asm):00662                 INC     NWINS
+406B C608             (       omni84.asm):00663                 LDB     #8
+406D 3D               (       omni84.asm):00664                 MUL
+406E E7C4             (       omni84.asm):00665                 STB     ,U
+4070 E744             (       omni84.asm):00666                 STB     4,U
+4072 D7B5             (       omni84.asm):00667                 STB     ULROW
+4074 A680             (       omni84.asm):00668                 LDA     ,X+
+4076 C607             (       omni84.asm):00669                 LDB     #7
+4078 3D               (       omni84.asm):00670                 MUL
+4079 E741             (       omni84.asm):00671                 STB     1,U
+407B E745             (       omni84.asm):00672                 STB     5,U
+407D D7B6             (       omni84.asm):00673                 STB     ULCOL
+407F A680             (       omni84.asm):00674                 LDA     ,X+
+4081 C608             (       omni84.asm):00675                 LDB     #8
+4083 3D               (       omni84.asm):00676                 MUL
+4084 E742             (       omni84.asm):00677                 STB     2,U
+4086 D7B7             (       omni84.asm):00678                 STB     LRROW
+4088 A680             (       omni84.asm):00679                 LDA     ,X+
+408A C607             (       omni84.asm):00680                 LDB     #7
+408C 3D               (       omni84.asm):00681                 MUL
+408D E743             (       omni84.asm):00682                 STB     3,U
+408F D7B8             (       omni84.asm):00683                 STB     LRCOL
+4091 10AF46           (       omni84.asm):00684                 STY     6,U
+4094 10AF48           (       omni84.asm):00685                 STY     8,U
+4097 31A810           (       omni84.asm):00686                 LEAY    16,Y
+409A 334A             (       omni84.asm):00687                 LEAU    10,U
+409C 170056           (       omni84.asm):00688                 LBSR    WBORDR
+409F 17003C           (       omni84.asm):00689                 LBSR    WCENTR
+40A2 20C1             (       omni84.asm):00690                 BRA     WINIT0
+40A4 CE345A           (       omni84.asm):00691         XWINIT  LDU     #QUETBL
+40A7 8620             (       omni84.asm):00692                 LDA     #32
+40A9 3402             (       omni84.asm):00693                 PSHS    A
+40AB 4F               (       omni84.asm):00694                 CLRA
+40AC 5F               (       omni84.asm):00695                 CLRB
+40AD 6AE4             (       omni84.asm):00696         WINIT2  DEC     ,S
+40AF 2D06             (       omni84.asm):00697                 BLT     XXWINI
+40B1 EDC1             (       omni84.asm):00698                 STD     ,U++
+40B3 EDC1             (       omni84.asm):00699                 STD     ,U++
+40B5 20F6             (       omni84.asm):00700                 BRA     WINIT2
+40B7 3502             (       omni84.asm):00701         XXWINI  PULS    A
+40B9 39               (       omni84.asm):00702                 RTS
+                      (       omni84.asm):00703         
+40BA 7E3FAE           (       omni84.asm):00704         HOOK    JMP     IRQ
+                      (       omni84.asm):00705         
+40BD                  (       omni84.asm):00706         WDATA
+                      (       omni84.asm):00707         *WINDOW #0
+40BD 01               (       omni84.asm):00708                 FCB     1
+40BE 02               (       omni84.asm):00709                 FCB     2
+40BF 05               (       omni84.asm):00710                 FCB     5
+40C0 08               (       omni84.asm):00711                 FCB     8
+                      (       omni84.asm):00712         
+                      (       omni84.asm):00713         *WINDOW #1
+40C1 01               (       omni84.asm):00714                 FCB     1
+40C2 0B               (       omni84.asm):00715                 FCB     11
+40C3 05               (       omni84.asm):00716                 FCB     5
+40C4 12               (       omni84.asm):00717                 FCB     18
+                      (       omni84.asm):00718         
+                      (       omni84.asm):00719         *WINDOW #2
+40C5 01               (       omni84.asm):00720                 FCB     1
+40C6 14               (       omni84.asm):00721                 FCB     20
+40C7 05               (       omni84.asm):00722                 FCB     5
+40C8 1B               (       omni84.asm):00723                 FCB     27
+                      (       omni84.asm):00724         
+                      (       omni84.asm):00725         *WINDOW #3
+40C9 01               (       omni84.asm):00726                 FCB     1
+40CA 1D               (       omni84.asm):00727                 FCB     29
+40CB 05               (       omni84.asm):00728                 FCB     5
+40CC 23               (       omni84.asm):00729                 FCB     35
+                      (       omni84.asm):00730         
+                      (       omni84.asm):00731         *WINDOW #4
+40CD 07               (       omni84.asm):00732                 FCB     7
+40CE 02               (       omni84.asm):00733                 FCB     2
+40CF 0D               (       omni84.asm):00734                 FCB     13
+40D0 23               (       omni84.asm):00735                 FCB     35
+                      (       omni84.asm):00736         
+                      (       omni84.asm):00737         *WINDOW #5
+40D1 0F               (       omni84.asm):00738                 FCB     15
+40D2 02               (       omni84.asm):00739                 FCB     2
+40D3 10               (       omni84.asm):00740                 FCB     16
+40D4 23               (       omni84.asm):00741                 FCB     35
+                      (       omni84.asm):00742         
+                      (       omni84.asm):00743         *WINDOW #6
+40D5 12               (       omni84.asm):00744                 FCB     18
+40D6 02               (       omni84.asm):00745                 FCB     2
+40D7 16               (       omni84.asm):00746                 FCB     22
+40D8 12               (       omni84.asm):00747                 FCB     18
+                      (       omni84.asm):00748         
+                      (       omni84.asm):00749         *WINDOW #7
+40D9 12               (       omni84.asm):00750                 FCB     18
+40DA 14               (       omni84.asm):00751                 FCB     20
+40DB 16               (       omni84.asm):00752                 FCB     22
+40DC 23               (       omni84.asm):00753                 FCB     35
+                      (       omni84.asm):00754         
+40DD FF               (       omni84.asm):00755                 FCB     -1
+                      (       omni84.asm):00756         
+                      (       omni84.asm):00757         *COMPUTE WINDOW CENTER
+                      (       omni84.asm):00758         *
+40DE 3430             (       omni84.asm):00759         WCENTR  PSHS    X,Y
+40E0 DCB5             (       omni84.asm):00760                 LDD     ULROW
+40E2 3406             (       omni84.asm):00761                 PSHS    D
+40E4 DCB7             (       omni84.asm):00762                 LDD     LRROW
+40E6 A0E4             (       omni84.asm):00763                 SUBA    ,S
+40E8 E061             (       omni84.asm):00764                 SUBB    1,S
+40EA 44               (       omni84.asm):00765                 LSRA
+40EB 54               (       omni84.asm):00766                 LSRB
+40EC ABE0             (       omni84.asm):00767                 ADDA    ,S+
+40EE EBE0             (       omni84.asm):00768                 ADDB    ,S+
+40F0 8B03             (       omni84.asm):00769                 ADDA    #3
+                      (       omni84.asm):00770         *CENTER X,Y ARE IN B,A
+40F2 3530             (       omni84.asm):00771                 PULS    X,Y
+40F4 39               (       omni84.asm):00772                 RTS
+                      (       omni84.asm):00773         
+                      (       omni84.asm):00774         *DRAW WINDOW BORDER
+                      (       omni84.asm):00775         *
+40F5 3430             (       omni84.asm):00776         WBORDR  PSHS    X,Y
+40F7 DCB5             (       omni84.asm):00777                 LDD     ULROW
+40F9 17007A           (       omni84.asm):00778                 LBSR    GENPTR
+40FC 1F01             (       omni84.asm):00779                 TFR     D,X
+40FE 301F             (       omni84.asm):00780                 LEAX    -1,X
+4100 3088A0           (       omni84.asm):00781                 LEAX    -32*3,X
+4103 96B5             (       omni84.asm):00782                 LDA     ULROW
+4105 D6B8             (       omni84.asm):00783                 LDB     LRCOL
+4107 17006C           (       omni84.asm):00784                 LBSR    GENPTR
+410A 1F02             (       omni84.asm):00785                 TFR     D,Y
+410C 3121             (       omni84.asm):00786                 LEAY    1,Y
+410E 31A8A0           (       omni84.asm):00787                 LEAY    -32*3,Y
+4111 CCF87F           (       omni84.asm):00788                 LDD     #$F87F
+4114 A484             (       omni84.asm):00789                 ANDA    ,X
+4116 A784             (       omni84.asm):00790                 STA     ,X
+4118 A4A4             (       omni84.asm):00791                 ANDA    ,Y
+411A E7A4             (       omni84.asm):00792                 STB     ,Y
+411C 3430             (       omni84.asm):00793                 PSHS    X,Y
+411E 96B7             (       omni84.asm):00794                 LDA     LRROW
+4120 D6B6             (       omni84.asm):00795                 LDB     ULCOL
+4122 170051           (       omni84.asm):00796                 LBSR    GENPTR
+4125 1F01             (       omni84.asm):00797                 TFR     D,X
+4127 301F             (       omni84.asm):00798                 LEAX    -1,X
+4129 308900C0         (       omni84.asm):00799                 LEAX    32*6,X
+412D 308860           (       omni84.asm):00800                 LEAX    32*3,X
+4130 DCB7             (       omni84.asm):00801                 LDD     LRROW
+4132 170041           (       omni84.asm):00802                 LBSR    GENPTR
+4135 1F02             (       omni84.asm):00803                 TFR     D,Y
+4137 3121             (       omni84.asm):00804                 LEAY    1,Y
+4139 31A900C0         (       omni84.asm):00805                 LEAY    32*6,Y
+413D 31A860           (       omni84.asm):00806                 LEAY    32*3,Y
+4140 CCF81F           (       omni84.asm):00807                 LDD     #$F81F
+4143 A484             (       omni84.asm):00808                 ANDA    ,X
+4145 A784             (       omni84.asm):00809                 STA     ,X
+4147 E4A4             (       omni84.asm):00810                 ANDB    ,Y
+4149 E7A4             (       omni84.asm):00811                 STB     ,Y
+414B E7A820           (       omni84.asm):00812                 STB     32,Y
+414E 3430             (       omni84.asm):00813                 PSHS    X,Y
+4150 170037           (       omni84.asm):00814                 LBSR    VLINE
+4153 AEE4             (       omni84.asm):00815                 LDX     ,S
+4155 10AE62           (       omni84.asm):00816                 LDY     2,S
+4158 170024           (       omni84.asm):00817                 LBSR    HLINE
+415B AE64             (       omni84.asm):00818                 LDX     4,S
+415D 10AE66           (       omni84.asm):00819                 LDY     6,S
+4160 17001C           (       omni84.asm):00820                 LBSR    HLINE
+4163 AEE4             (       omni84.asm):00821                 LDX     ,S
+4165 10AE62           (       omni84.asm):00822                 LDY     2,S
+4168 308820           (       omni84.asm):00823                 LEAX    32,X
+416B 31A820           (       omni84.asm):00824                 LEAY    32,Y
+416E 17000E           (       omni84.asm):00825                 LBSR    HLINE
+4171 3268             (       omni84.asm):00826                 LEAS    8,S
+4173 3530             (       omni84.asm):00827                 PULS    X,Y
+4175 39               (       omni84.asm):00828                 RTS
+                      (       omni84.asm):00829         
+                      (       omni84.asm):00830         *GENERATE BYTE POINTER
+                      (       omni84.asm):00831         *
+4176 44               (       omni84.asm):00832         GENPTR  LSRA
+4177 56               (       omni84.asm):00833                 RORB
+4178 44               (       omni84.asm):00834                 LSRA
+4179 56               (       omni84.asm):00835                 RORB
+417A 44               (       omni84.asm):00836                 LSRA
+417B 56               (       omni84.asm):00837                 RORB
+417C D3C3             (       omni84.asm):00838                 ADDD    SCRN
+417E 39               (       omni84.asm):00839                 RTS
+                      (       omni84.asm):00840         
+417F 3001             (       omni84.asm):00841         HLINE   LEAX    1,X
+4181 6F80             (       omni84.asm):00842         HLINE0  CLR     ,X+
+4183 3420             (       omni84.asm):00843                 PSHS    Y
+4185 ACE1             (       omni84.asm):00844                 CMPX    ,S++
+4187 26F8             (       omni84.asm):00845                 BNE     HLINE0
+4189 39               (       omni84.asm):00846                 RTS
+                      (       omni84.asm):00847         
+418A AE66             (       omni84.asm):00848         VLINE   LDX     6,S
+418C 10AE68           (       omni84.asm):00849                 LDY     8,S
+418F 308820           (       omni84.asm):00850                 LEAX    32,X
+4192 31A820           (       omni84.asm):00851                 LEAY    32,Y
+4195 A684             (       omni84.asm):00852         VLINE0  LDA     ,X
+4197 84FB             (       omni84.asm):00853                 ANDA    #$FB
+4199 A784             (       omni84.asm):00854                 STA     ,X
+419B E6A4             (       omni84.asm):00855                 LDB     ,Y
+419D C41F             (       omni84.asm):00856                 ANDB    #$1F
+419F E7A4             (       omni84.asm):00857                 STB     ,Y
+41A1 308820           (       omni84.asm):00858                 LEAX    32,X
+41A4 31A820           (       omni84.asm):00859                 LEAY    32,Y
+41A7 AC62             (       omni84.asm):00860                 CMPX    2,S
+41A9 23EA             (       omni84.asm):00861                 BLS     VLINE0
+41AB 39               (       omni84.asm):00862                 RTS
+                      (       omni84.asm):00863         
+                      (       omni84.asm):00864         *DRAW ONE PIXEL
+                      (       omni84.asm):00865         *
+41AC 3404             (       omni84.asm):00866         PSET    PSHS    B
+41AE 17FFC5           (       omni84.asm):00867                 LBSR    GENPTR
+41B1 1F01             (       omni84.asm):00868                 TFR     D,X
+41B3 318DFB86         (       omni84.asm):00869                 LEAY    BITBL,PCR
+41B7 3504             (       omni84.asm):00870                 PULS    B
+41B9 C407             (       omni84.asm):00871                 ANDB    #7
+41BB A6A5             (       omni84.asm):00872                 LDA     B,Y
+41BD 43               (       omni84.asm):00873                 COMA
+41BE A484             (       omni84.asm):00874                 ANDA    ,X
+41C0 A784             (       omni84.asm):00875                 STA     ,X
+41C2 39               (       omni84.asm):00876                 RTS
+                      (       omni84.asm):00877         
+                      (       omni84.asm):00878         *MAKE KEYBEEP SOUND
+                      (       omni84.asm):00879         *
+41C3 3476             (       omni84.asm):00880         BEEP    PSHS    D,X,Y,U
+41C5 3276             (       omni84.asm):00881                 LEAS    -10,S
+41C7 1F89             (       omni84.asm):00882                 TFR     A,B
+41C9 C030             (       omni84.asm):00883                 SUBB    #'0
+41CB 4F               (       omni84.asm):00884                 CLRA
+41CC 338D00BB         (       omni84.asm):00885                 LEAU    TONES,PCR
+41D0 58               (       omni84.asm):00886                 ASLB
+41D1 33CB             (       omni84.asm):00887                 LEAU    D,U
+41D3 3440             (       omni84.asm):00888                 PSHS    U
+41D5 5F               (       omni84.asm):00889                 CLRB
+41D6 BDA9A2           (       omni84.asm):00890                 JSR     $A9A2
+41D9 BDA976           (       omni84.asm):00891                 JSR     $A976
+41DC 3540             (       omni84.asm):00892                 PULS    U
+41DE 4F               (       omni84.asm):00893                 CLRA
+41DF 5F               (       omni84.asm):00894                 CLRB
+41E0 EDE4             (       omni84.asm):00895                 STD     ,S
+41E2 ED62             (       omni84.asm):00896                 STD     2,S
+41E4 8602             (       omni84.asm):00897         MULUP1  LDA     #2
+41E6 A768             (       omni84.asm):00898                 STA     8,S
+41E8 318D003D         (       omni84.asm):00899                 LEAY    NOTES,PCR
+41EC A6C0             (       omni84.asm):00900                 LDA     ,U+
+41EE ECA6             (       omni84.asm):00901                 LDD     A,Y
+41F0 ED64             (       omni84.asm):00902                 STD     4,S
+41F2 A6C0             (       omni84.asm):00903                 LDA     ,U+
+41F4 ECA6             (       omni84.asm):00904                 LDD     A,Y
+41F6 ED66             (       omni84.asm):00905                 STD     6,S
+41F8 108E0028         (       omni84.asm):00906         MULUP2  LDY     #40
+41FC 8E0000           (       omni84.asm):00907         MULUP3  LDX     #0
+41FF E6E4             (       omni84.asm):00908                 LDB     ,S
+4201 2A01             (       omni84.asm):00909                 BPL     MU1
+4203 53               (       omni84.asm):00910                 COMB
+4204 3A               (       omni84.asm):00911         MU1     ABX
+4205 E662             (       omni84.asm):00912                 LDB     2,S
+4207 2A01             (       omni84.asm):00913                 BPL     MU2
+4209 53               (       omni84.asm):00914                 COMB
+420A 3A               (       omni84.asm):00915         MU2     ABX
+420B 1F10             (       omni84.asm):00916                 TFR     X,D
+                      (       omni84.asm):00917         *       LSRA
+                      (       omni84.asm):00918         *       RORB
+420D F7FF20           (       omni84.asm):00919                 STB     $FF20
+4210 ECE4             (       omni84.asm):00920                 LDD     ,S
+4212 E364             (       omni84.asm):00921                 ADDD    4,S
+4214 EDE4             (       omni84.asm):00922                 STD     ,S
+4216 EC62             (       omni84.asm):00923                 LDD     2,S
+4218 E366             (       omni84.asm):00924                 ADDD    6,S
+421A ED62             (       omni84.asm):00925                 STD     2,S
+421C 31A2             (       omni84.asm):00926                 LEAY    ,-Y
+421E 26DC             (       omni84.asm):00927                 BNE     MULUP3
+4220 6A68             (       omni84.asm):00928                 DEC     8,S
+4222 26D4             (       omni84.asm):00929                 BNE     MULUP2
+4224 326A             (       omni84.asm):00930         MUDUN   LEAS    10,S
+4226 3576             (       omni84.asm):00931                 PULS    D,X,Y,U
+4228 39               (       omni84.asm):00932                 RTS
+                      (       omni84.asm):00933         
+4229 0000             (       omni84.asm):00934         NOTES   FDB 0
+422B 026F             (       omni84.asm):00935                 FDB $26F
+422D 0294             (       omni84.asm):00936                 FDB $294
+422F 02EB             (       omni84.asm):00937                 FDB $2EB
+4231 02E4             (       omni84.asm):00938                 FDB $2E4
+4233 0310             (       omni84.asm):00939                 FDB $310
+4235 033F             (       omni84.asm):00940                 FDB $33F
+4237 0371             (       omni84.asm):00941                 FDB $371
+4239 03A5             (       omni84.asm):00942                 FDB $3A5
+423B 03DC             (       omni84.asm):00943                 FDB $3DC
+423D 0417             (       omni84.asm):00944                 FDB $417
+423F 0456             (       omni84.asm):00945                 FDB $456
+4241 0498             (       omni84.asm):00946                 FDB $498
+4243 04DD             (       omni84.asm):00947                 FDB $4DD
+4245 0528             (       omni84.asm):00948                 FDB $528
+4247 0576             (       omni84.asm):00949                 FDB $576
+4249 05C9             (       omni84.asm):00950                 FDB $5C9
+424B 0621             (       omni84.asm):00951                 FDB $621
+424D 067F             (       omni84.asm):00952                 FDB $67F
+424F 06E2             (       omni84.asm):00953                 FDB $6E2
+4251 074A             (       omni84.asm):00954                 FDB $74A
+4253 07B9             (       omni84.asm):00955                 FDB $7B9
+4255 082F             (       omni84.asm):00956                 FDB $82F
+4257 08AC             (       omni84.asm):00957                 FDB $8AC
+4259 0930             (       omni84.asm):00958                 FDB $930
+425B 09BB             (       omni84.asm):00959                 FDB $9BB
+425D 0A50             (       omni84.asm):00960                 FDB $A50
+425F 0AED             (       omni84.asm):00961                 FDB $AED
+4261 0B93             (       omni84.asm):00962                 FDB $B93
+4263 0C43             (       omni84.asm):00963                 FDB $C43
+4265 0CFE             (       omni84.asm):00964                 FDB $CFE
+4267 0DC4             (       omni84.asm):00965                 FDB $DC4
+4269 0E95             (       omni84.asm):00966                 FDB $E95
+426B 0F73             (       omni84.asm):00967                 FDB $F73
+426D 105F             (       omni84.asm):00968                 FDB $105F
+426F 1158             (       omni84.asm):00969                 FDB $1158
+4271 1260             (       omni84.asm):00970                 FDB $1260
+4273 1377             (       omni84.asm):00971                 FDB $1377
+4275 14A0             (       omni84.asm):00972                 FDB $14A0
+4277 15DA             (       omni84.asm):00973                 FDB $15DA
+4279 1726             (       omni84.asm):00974                 FDB $1726
+427B 1887             (       omni84.asm):00975                 FDB $1887
+427D 19FC             (       omni84.asm):00976                 FDB $19FC
+427F 1B88             (       omni84.asm):00977                 FDB $1B88
+4281 1D2B             (       omni84.asm):00978                 FDB $1D2B
+4283 1EE7             (       omni84.asm):00979                 FDB $1EE7
+4285 20BE             (       omni84.asm):00980                 FDB $20BE
+4287 22B0             (       omni84.asm):00981                 FDB $22B0
+4289 24C0             (       omni84.asm):00982                 FDB $24C0
+                      (       omni84.asm):00983         
+                      (       omni84.asm):00984         
+428B 3A32             (       omni84.asm):00985         TONES   FDB $3A32
+428D 3C32             (       omni84.asm):00986                 FDB $3C32
+428F 4032             (       omni84.asm):00987                 FDB $4032
+4291 3A34             (       omni84.asm):00988                 FDB $3A34
+4293 3C34             (       omni84.asm):00989                 FDB $3C34
+4295 4034             (       omni84.asm):00990                 FDB $4034
+4297 3A36             (       omni84.asm):00991                 FDB $3A36
+4299 3C36             (       omni84.asm):00992                 FDB $3C36
+429B 4036             (       omni84.asm):00993                 FDB $4036
+                      (       omni84.asm):00994         
+                      (       omni84.asm):00995         *CLEAR CURRENT WINDOW
+                      (       omni84.asm):00996         *
+429D 96B5             (       omni84.asm):00997         WCLEAR  LDA     ULROW
+429F D6B8             (       omni84.asm):00998                 LDB     LRCOL
+42A1 17FED2           (       omni84.asm):00999                 LBSR    GENPTR
+42A4 830020           (       omni84.asm):01000                 SUBD    #32
+42A7 3406             (       omni84.asm):01001                 PSHS    D
+42A9 DCB5             (       omni84.asm):01002                 LDD     ULROW
+42AB 17FEC8           (       omni84.asm):01003                 LBSR    GENPTR
+42AE 830020           (       omni84.asm):01004                 SUBD    #32
+42B1 3406             (       omni84.asm):01005                 PSHS    D
+42B3 DCB7             (       omni84.asm):01006                 LDD     LRROW
+42B5 17FEBE           (       omni84.asm):01007                 LBSR    GENPTR
+42B8 C30100           (       omni84.asm):01008                 ADDD    #256
+42BB 1F03             (       omni84.asm):01009                 TFR     D,U
+42BD AEE4             (       omni84.asm):01010         WCLR1   LDX     ,S
+42BF 308820           (       omni84.asm):01011                 LEAX    32,X
+42C2 10AE62           (       omni84.asm):01012                 LDY     2,S
+42C5 31A820           (       omni84.asm):01013                 LEAY    32,Y
+42C8 3440             (       omni84.asm):01014                 PSHS    U
+42CA 10ACE1           (       omni84.asm):01015                 CMPY    ,S++
+42CD 2211             (       omni84.asm):01016                 BHI     WCLR3
+42CF AFE4             (       omni84.asm):01017                 STX     ,S
+42D1 10AF62           (       omni84.asm):01018                 STY     2,S
+42D4 86FF             (       omni84.asm):01019                 LDA     #-1
+42D6 A780             (       omni84.asm):01020         WCLR2   STA     ,X+
+42D8 3420             (       omni84.asm):01021                 PSHS    Y
+42DA ACE1             (       omni84.asm):01022                 CMPX    ,S++
+42DC 23F8             (       omni84.asm):01023                 BLS     WCLR2
+42DE 20DD             (       omni84.asm):01024                 BRA     WCLR1
+42E0 3264             (       omni84.asm):01025         WCLR3   LEAS    4,S
+42E2 DCB5             (       omni84.asm):01026                 LDD     ULROW
+42E4 DDB9             (       omni84.asm):01027                 STD     CURROW
+42E6 39               (       omni84.asm):01028                 RTS
+                      (       omni84.asm):01029         
+                      (       omni84.asm):01030         *CENTER LINE OF TEXT
+                      (       omni84.asm):01031         *
+42E7 3436             (       omni84.asm):01032         CENTER  PSHS    D,X,Y
+42E9 108E0000         (       omni84.asm):01033                 LDY     #0
+42ED 5F               (       omni84.asm):01034                 CLRB
+42EE A680             (       omni84.asm):01035         CENTR1  LDA     ,X+
+42F0 2708             (       omni84.asm):01036                 BEQ     CENTR2
+42F2 810D             (       omni84.asm):01037                 CMPA    #$0D
+42F4 2704             (       omni84.asm):01038                 BEQ     CENTR2
+42F6 3139             (       omni84.asm):01039                 LEAY    -7,Y
+42F8 20F4             (       omni84.asm):01040                 BRA     CENTR1
+42FA 4F               (       omni84.asm):01041         CENTR2  CLRA
+42FB D6B6             (       omni84.asm):01042                 LDB     ULCOL
+42FD 3406             (       omni84.asm):01043                 PSHS    D
+42FF D6B8             (       omni84.asm):01044                 LDB     LRCOL
+4301 A3E1             (       omni84.asm):01045                 SUBD    ,S++
+4303 47               (       omni84.asm):01046                 ASRA
+4304 56               (       omni84.asm):01047                 RORB
+4305 DBB6             (       omni84.asm):01048                 ADDB    ULCOL
+4307 4F               (       omni84.asm):01049                 CLRA
+4308 1E02             (       omni84.asm):01050                 EXG     D,Y
+430A 47               (       omni84.asm):01051                 ASRA
+430B 56               (       omni84.asm):01052                 RORB
+430C 3420             (       omni84.asm):01053                 PSHS    Y
+430E E3E1             (       omni84.asm):01054                 ADDD    ,S++
+4310 1093B6           (       omni84.asm):01055                 CMPD    ULCOL
+4313 2402             (       omni84.asm):01056                 BHS     XCENTR
+4315 D6B6             (       omni84.asm):01057                 LDB     ULCOL
+4317 D7BA             (       omni84.asm):01058         XCENTR  STB     CURCOL
+4319 3536             (       omni84.asm):01059                 PULS    D,X,Y
+431B 39               (       omni84.asm):01060                 RTS
+                      (       omni84.asm):01061         
+                      (       omni84.asm):01062         *GET KEYBOARD INPUT
+                      (       omni84.asm):01063         *
+431C 0CB4             (       omni84.asm):01064         KEYIN   INC     TIMER
+431E 2D05             (       omni84.asm):01065                 BLT     KEYIN1
+4320 17FA22           (       omni84.asm):01066                 LBSR    ERASE
+4323 2009             (       omni84.asm):01067                 BRA     KEYIN2
+4325 17FA63           (       omni84.asm):01068         KEYIN1  LBSR    CURSOR
+4328 96BA             (       omni84.asm):01069                 LDA     CURCOL
+432A 8007             (       omni84.asm):01070                 SUBA    #7
+432C 97BA             (       omni84.asm):01071                 STA     CURCOL
+432E AD9FA000         (       omni84.asm):01072         KEYIN2  JSR     [$A000]
+4332 3402             (       omni84.asm):01073                 PSHS    A
+4334 2745             (       omni84.asm):01074                 BEQ     XKEYIN
+4336 B7FFCC           (       omni84.asm):01075                 STA     $FFCC
+4339 B7FFCA           (       omni84.asm):01076                 STA     $FFCA
+433C 17FE84           (       omni84.asm):01077                 LBSR    BEEP
+433F A6E4             (       omni84.asm):01078                 LDA     ,S
+4341 810C             (       omni84.asm):01079                 CMPA    #$0C
+4343 2605             (       omni84.asm):01080                 BNE     KEYIN3
+4345 D6CA             (       omni84.asm):01081                 LDB     COUNT
+4347 50               (       omni84.asm):01082                 NEGB
+4348 2013             (       omni84.asm):01083                 BRA     KEYIN6
+434A 810D             (       omni84.asm):01084         KEYIN3  CMPA    #$0D
+434C 2605             (       omni84.asm):01085                 BNE     KEYIN4
+434E D6CA             (       omni84.asm):01086                 LDB     COUNT
+4350 50               (       omni84.asm):01087                 NEGB
+4351 200A             (       omni84.asm):01088                 BRA     KEYIN6
+4353 8108             (       omni84.asm):01089         KEYIN4  CMPA    #$08
+4355 2604             (       omni84.asm):01090                 BNE     KEYIN5
+4357 C6FF             (       omni84.asm):01091                 LDB     #$FF
+4359 2002             (       omni84.asm):01092                 BRA     KEYIN6
+435B C601             (       omni84.asm):01093         KEYIN5  LDB     #1
+435D DBCA             (       omni84.asm):01094         KEYIN6  ADDB    COUNT
+435F C120             (       omni84.asm):01095                 CMPB    #32
+4361 2218             (       omni84.asm):01096                 BHI     XKEYIN
+4363 D7CA             (       omni84.asm):01097                 STB     COUNT
+4365 A6E4             (       omni84.asm):01098                 LDA     ,S
+4367 A79F00C8         (       omni84.asm):01099                 STA     [BUFPTR]
+436B 308DF20B         (       omni84.asm):01100                 LEAX    BUFFER,PCR
+436F 3085             (       omni84.asm):01101                 LEAX    B,X
+4371 9FC8             (       omni84.asm):01102                 STX     BUFPTR
+4373 17F9CF           (       omni84.asm):01103                 LBSR    ERASE
+4376 A6E4             (       omni84.asm):01104                 LDA     ,S
+4378 17F916           (       omni84.asm):01105                 LBSR    OUT
+437B 3502             (       omni84.asm):01106         XKEYIN  PULS    A
+437D 4D               (       omni84.asm):01107                 TSTA
+437E 39               (       omni84.asm):01108                 RTS
+                      (       omni84.asm):01109         
+                      (       omni84.asm):01110         *COMMAND PARSER
+                      (       omni84.asm):01111         *
+437F CC2020           (       omni84.asm):01112         PARSE   LDD     #$2020
+4382 DDCB             (       omni84.asm):01113                 STD     VERB
+4384 DDCD             (       omni84.asm):01114                 STD     VERB+2
+4386 DDCF             (       omni84.asm):01115                 STD     VERB+4
+4388 DDD1             (       omni84.asm):01116                 STD     OBJECT
+438A DDD3             (       omni84.asm):01117                 STD     OBJECT+2
+438C DDD5             (       omni84.asm):01118                 STD     OBJECT+4
+438E 8E357A           (       omni84.asm):01119                 LDX     #BUFFER
+4391 8605             (       omni84.asm):01120                 LDA     #5
+4393 CE00CB           (       omni84.asm):01121                 LDU     #VERB
+4396 E680             (       omni84.asm):01122         PARSE0  LDB     ,X+
+4398 C10D             (       omni84.asm):01123                 CMPB    #$0D
+439A 2721             (       omni84.asm):01124                 BEQ     XPARSE
+439C C120             (       omni84.asm):01125                 CMPB    #$20
+439E 2707             (       omni84.asm):01126                 BEQ     PARSE1
+43A0 4A               (       omni84.asm):01127                 DECA
+43A1 2D04             (       omni84.asm):01128                 BLT     PARSE1
+43A3 E7C0             (       omni84.asm):01129                 STB     ,U+
+43A5 20EF             (       omni84.asm):01130                 BRA     PARSE0
+43A7 CE00D1           (       omni84.asm):01131         PARSE1  LDU     #OBJECT
+43AA 8605             (       omni84.asm):01132                 LDA     #5
+43AC E680             (       omni84.asm):01133         PARSE2  LDB     ,X+
+43AE C10D             (       omni84.asm):01134                 CMPB    #$0D
+43B0 270B             (       omni84.asm):01135                 BEQ     XPARSE
+43B2 C120             (       omni84.asm):01136                 CMPB    #$20
+43B4 2707             (       omni84.asm):01137                 BEQ     XPARSE
+43B6 4A               (       omni84.asm):01138                 DECA
+43B7 2D04             (       omni84.asm):01139                 BLT     XPARSE
+43B9 E7C0             (       omni84.asm):01140                 STB     ,U+
+43BB 20EF             (       omni84.asm):01141                 BRA     PARSE2
+43BD 39               (       omni84.asm):01142         XPARSE  RTS
+                      (       omni84.asm):01143         
+                      (       omni84.asm):01144         *COMMAND DISPATCHER
+                      (       omni84.asm):01145         *
+43BE B6357A           (       omni84.asm):01146         DISP    LDA     BUFFER
+43C1 810D             (       omni84.asm):01147                 CMPA    #$0D
+43C3 272B             (       omni84.asm):01148                 BEQ     XDISP
+43C5 17004D           (       omni84.asm):01149                 LBSR    GENKEY
+43C8 338D0025         (       omni84.asm):01150                 LEAU    TABLE,PCR
+43CC 335C             (       omni84.asm):01151                 LEAU    -4,U
+43CE 3344             (       omni84.asm):01152         DISP0   LEAU    4,U
+43D0 6DC4             (       omni84.asm):01153                 TST     ,U
+43D2 2D15             (       omni84.asm):01154                 BLT     ERR
+43D4 10A3C4           (       omni84.asm):01155                 CMPD    ,U
+43D7 26F5             (       omni84.asm):01156                 BNE     DISP0
+43D9 3342             (       omni84.asm):01157                 LEAU    2,U
+43DB ECC4             (       omni84.asm):01158                 LDD     ,U
+43DD 33CB             (       omni84.asm):01159                 LEAU    D,U
+43DF 3440             (       omni84.asm):01160                 PSHS    U
+43E1 17011E           (       omni84.asm):01161                 LBSR    LOOKUP
+43E4 3540             (       omni84.asm):01162                 PULS    U
+43E6 ADC4             (       omni84.asm):01163                 JSR     ,U
+43E8 39               (       omni84.asm):01164                 RTS
+43E9 338D001A         (       omni84.asm):01165         ERR     LEAU    ERROR,PCR
+43ED 17FBA7           (       omni84.asm):01166                 LBSR    MSG
+43F0 39               (       omni84.asm):01167         XDISP   RTS
+                      (       omni84.asm):01168         
+43F1 11B3             (       omni84.asm):01169         TABLE   FDB     $11B3
+43F3 02DE             (       omni84.asm):01170                 FDB     ENT-.
+43F5 468D             (       omni84.asm):01171                 FDB     $468D
+43F7 0042             (       omni84.asm):01172                 FDB     RUN-.
+43F9 2DC0             (       omni84.asm):01173                 FDB     $2DC0
+43FB 0142             (       omni84.asm):01174                 FDB     LOA-.
+43FD 4815             (       omni84.asm):01175                 FDB     $4815
+43FF 0215             (       omni84.asm):01176                 FDB     SAV-.
+4401 300F             (       omni84.asm):01177                 FDB     $300F
+4403 0588             (       omni84.asm):01178                 FDB     MAP-.
+4405 FFFF             (       omni84.asm):01179                 FDB     $FFFF
+                      (       omni84.asm):01180         
+4407                  (       omni84.asm):01181         ERROR
+4407 53594E5441582045 (       omni84.asm):01182          FCC /SYNTAX ERROR/
+     52524F52
+4413 0D00             (       omni84.asm):01183                 FDB     $0D00
+                      (       omni84.asm):01184         
+4415 6FE2             (       omni84.asm):01185         GENKEY  CLR     ,-S
+4417 6FE2             (       omni84.asm):01186                 CLR     ,-S
+4419 96CB             (       omni84.asm):01187                 LDA     VERB
+441B 8041             (       omni84.asm):01188                 SUBA    #'A
+441D 48               (       omni84.asm):01189                 LSLA
+441E 48               (       omni84.asm):01190                 LSLA
+441F 5F               (       omni84.asm):01191                 CLRB
+4420 EDE4             (       omni84.asm):01192                 STD     ,S
+4422 D6CC             (       omni84.asm):01193                 LDB     VERB+1
+4424 C041             (       omni84.asm):01194                 SUBB    #'A
+4426 8620             (       omni84.asm):01195                 LDA     #32
+4428 3D               (       omni84.asm):01196                 MUL
+4429 AAE4             (       omni84.asm):01197                 ORA     ,S
+442B EA61             (       omni84.asm):01198                 ORB     1,S
+442D EDE4             (       omni84.asm):01199                 STD     ,S
+442F 4F               (       omni84.asm):01200                 CLRA
+4430 D6CD             (       omni84.asm):01201                 LDB     VERB+2
+4432 C041             (       omni84.asm):01202                 SUBB    #'A
+4434 AAE0             (       omni84.asm):01203                 ORA     ,S+
+4436 EAE0             (       omni84.asm):01204                 ORB     ,S+
+4438 39               (       omni84.asm):01205                 RTS
+                      (       omni84.asm):01206         
+4439                  (       omni84.asm):01207         RUN
+4439 8604             (       omni84.asm):01208                 LDA     #4
+443B 308D0004         (       omni84.asm):01209                 LEAX    M1,PCR
+443F 17FBEA           (       omni84.asm):01210                 LBSR    PRINT
+4442 39               (       omni84.asm):01211                 RTS
+                      (       omni84.asm):01212         
+4443 434F4D4D414E4420 (       omni84.asm):01213         M1 FCC /COMMAND OKAY/
+     4F4B4159
+444F 0D00             (       omni84.asm):01214                 FDB     $0D00
+                      (       omni84.asm):01215         
+                      (       omni84.asm):01216         *LIST INVENTORY CONTENTS
+                      (       omni84.asm):01217         *       A=WINDOW (0-7)
+                      (       omni84.asm):01218         *       X=DATA LIST
+                      (       omni84.asm):01219         *
+4451 1A10             (       omni84.asm):01220         LIST    ORCC    #$10
+4453 CE3400           (       omni84.asm):01221                 LDU     #WINTBL
+4456 C60A             (       omni84.asm):01222                 LDB     #10
+4458 3D               (       omni84.asm):01223                 MUL
+4459 33CB             (       omni84.asm):01224                 LEAU    D,U
+445B DCB5             (       omni84.asm):01225                 LDD     ULROW
+445D 3406             (       omni84.asm):01226                 PSHS    D
+445F DCB7             (       omni84.asm):01227                 LDD     LRROW
+4461 3406             (       omni84.asm):01228                 PSHS    D
+4463 DCB9             (       omni84.asm):01229                 LDD     CURROW
+4465 3406             (       omni84.asm):01230                 PSHS    D
+4467 ECC4             (       omni84.asm):01231                 LDD     ,U
+4469 DDB5             (       omni84.asm):01232                 STD     ULROW
+446B EC42             (       omni84.asm):01233                 LDD     2,U
+446D DDB7             (       omni84.asm):01234                 STD     LRROW
+446F EC44             (       omni84.asm):01235                 LDD     4,U
+4471 DDB9             (       omni84.asm):01236                 STD     CURROW
+4473 860C             (       omni84.asm):01237                 LDA     #$0C
+4475 3410             (       omni84.asm):01238                 PSHS    X
+4477 17F817           (       omni84.asm):01239                 LBSR    OUT
+447A 3510             (       omni84.asm):01240                 PULS    X
+447C A61F             (       omni84.asm):01241                 LDA     -1,X
+447E 3402             (       omni84.asm):01242                 PSHS    A
+4480 6AE4             (       omni84.asm):01243         LIST0   DEC     ,S
+4482 2D2A             (       omni84.asm):01244                 BLT     XLIST
+4484 E680             (       omni84.asm):01245                 LDB     ,X+
+4486 338D0035         (       omni84.asm):01246                 LEAU    WORDS,PCR
+448A 8605             (       omni84.asm):01247                 LDA     #5
+448C 3D               (       omni84.asm):01248                 MUL
+448D 33CB             (       omni84.asm):01249                 LEAU    D,U
+448F C605             (       omni84.asm):01250                 LDB     #5
+4491 5A               (       omni84.asm):01251         LIST1   DECB
+4492 2D0B             (       omni84.asm):01252                 BLT     XLIST1
+4494 A6C0             (       omni84.asm):01253                 LDA     ,U+
+4496 3454             (       omni84.asm):01254                 PSHS    B,X,U
+4498 17F7F6           (       omni84.asm):01255                 LBSR    OUT
+449B 3554             (       omni84.asm):01256                 PULS    B,X,U
+449D 20F2             (       omni84.asm):01257                 BRA     LIST1
+449F 6DE4             (       omni84.asm):01258         XLIST1  TST     ,S
+44A1 27DD             (       omni84.asm):01259                 BEQ     LIST0
+44A3 8609             (       omni84.asm):01260                 LDA     #$09
+44A5 3410             (       omni84.asm):01261                 PSHS    X
+44A7 17F7E7           (       omni84.asm):01262                 LBSR    OUT
+44AA 3510             (       omni84.asm):01263                 PULS    X
+44AC 20D2             (       omni84.asm):01264                 BRA     LIST0
+44AE 3502             (       omni84.asm):01265         XLIST   PULS    A
+44B0 3506             (       omni84.asm):01266                 PULS    D
+44B2 DDB9             (       omni84.asm):01267                 STD     CURROW
+44B4 3506             (       omni84.asm):01268                 PULS    D
+44B6 DDB7             (       omni84.asm):01269                 STD     LRROW
+44B8 3506             (       omni84.asm):01270                 PULS    D
+44BA DDB5             (       omni84.asm):01271                 STD     ULROW
+44BC 1CEF             (       omni84.asm):01272                 ANDCC   #$EF
+44BE 39               (       omni84.asm):01273                 RTS
+                      (       omni84.asm):01274         
+44BF                  (       omni84.asm):01275         WORDS
+44BF 504F525431       (       omni84.asm):01276                 FCC /PORT1/
+44C4 504F525432       (       omni84.asm):01277                 FCC /PORT2/
+44C9 504F525433       (       omni84.asm):01278                 FCC /PORT3/
+44CE 53565A5944       (       omni84.asm):01279                 FCC /SVZYD/
+44D3 4E51534C57       (       omni84.asm):01280                 FCC /NQSLW/
+44D8 4D5A4C434D       (       omni84.asm):01281                 FCC /MZLCM/
+44DD 434C4C5446       (       omni84.asm):01282                 FCC /CLLTF/
+44E2 424C4E464A       (       omni84.asm):01283                 FCC /BLNFJ/
+44E7 5454534C58       (       omni84.asm):01284                 FCC /TTSLX/
+44EC 4C4E44564E       (       omni84.asm):01285                 FCC /LNDVN/
+44F1 4B4359524B       (       omni84.asm):01286                 FCC /KCYRK/
+44F6 4458444A43       (       omni84.asm):01287                 FCC /DXDJC/
+44FB 4C594D4743       (       omni84.asm):01288                 FCC /LYMGC/
+4500 FFFF             (       omni84.asm):01289                 FDB $FFFF
+                      (       omni84.asm):01290         
+                      (       omni84.asm):01291         *LOOK UP OBJECT
+                      (       omni84.asm):01292         *       A=OBJECT CODE
+                      (       omni84.asm):01293         *
+4502 338CBA           (       omni84.asm):01294         LOOKUP  LEAU    WORDS,PCR
+4505 6FE2             (       omni84.asm):01295                 CLR     ,-S
+4507 1F32             (       omni84.asm):01296         LOOKU0  TFR     U,Y
+4509 8E00D1           (       omni84.asm):01297                 LDX     #OBJECT
+450C 8605             (       omni84.asm):01298                 LDA     #5
+450E 3402             (       omni84.asm):01299                 PSHS    A
+4510 6AE4             (       omni84.asm):01300         LOOKU1  DEC     ,S
+4512 2D1A             (       omni84.asm):01301                 BLT     LOOKU2
+4514 A680             (       omni84.asm):01302                 LDA     ,X+
+4516 A1A0             (       omni84.asm):01303                 CMPA    ,Y+
+4518 27F6             (       omni84.asm):01304                 BEQ     LOOKU1
+451A 3502             (       omni84.asm):01305                 PULS    A
+451C 3345             (       omni84.asm):01306                 LEAU    5,U
+451E 6CE4             (       omni84.asm):01307                 INC     ,S
+4520 ECC4             (       omni84.asm):01308                 LDD     ,U
+4522 1083FFFF         (       omni84.asm):01309                 CMPD    #$FFFF
+4526 26DF             (       omni84.asm):01310                 BNE     LOOKU0
+4528 86FF             (       omni84.asm):01311                 LDA     #$FF
+452A A7E4             (       omni84.asm):01312                 STA     ,S
+452C 2002             (       omni84.asm):01313                 BRA     LOOKU3
+452E 3502             (       omni84.asm):01314         LOOKU2  PULS    A
+4530 3502             (       omni84.asm):01315         LOOKU3  PULS    A
+4532 39               (       omni84.asm):01316                 RTS
+                      (       omni84.asm):01317         
+                      (       omni84.asm):01318         *SEARCH LIST
+                      (       omni84.asm):01319         *       X=LIST
+                      (       omni84.asm):01320         *       A=ITEM
+                      (       omni84.asm):01321         *
+4533 E61F             (       omni84.asm):01322         SEARCH  LDB     -1,X
+4535 5A               (       omni84.asm):01323         SEARC0  DECB
+4536 2D04             (       omni84.asm):01324                 BLT     SEARC1
+4538 A180             (       omni84.asm):01325                 CMPA    ,X+
+453A 26F9             (       omni84.asm):01326                 BNE     SEARC0
+453C 39               (       omni84.asm):01327         SEARC1  RTS
+                      (       omni84.asm):01328         
+                      (       omni84.asm):01329         *LOAD PROGRAM FROM SYSTEM
+                      (       omni84.asm):01330         *       A=PROGRAM CODE
+                      (       omni84.asm):01331         *
+453D F635A2           (       omni84.asm):01332         LOA     LDB     ULIST-1
+4540 C10A             (       omni84.asm):01333                 CMPB    #10
+4542 2D08             (       omni84.asm):01334                 BLT     LOA0
+4544 338D006E         (       omni84.asm):01335                 LEAU    FULL,PCR
+4548 17FA4C           (       omni84.asm):01336                 LBSR    MSG
+454B 39               (       omni84.asm):01337                 RTS
+454C 8E35A3           (       omni84.asm):01338         LOA0    LDX     #ULIST
+454F 17FFE1           (       omni84.asm):01339                 LBSR    SEARCH
+4552 2D08             (       omni84.asm):01340                 BLT     LOA1
+4554 338D0076         (       omni84.asm):01341                 LEAU    LOADD,PCR
+4558 17FA3C           (       omni84.asm):01342                 LBSR    MSG
+455B 39               (       omni84.asm):01343                 RTS
+455C 9ED7             (       omni84.asm):01344         LOA1    LDX     SLIST
+455E 17FFD2           (       omni84.asm):01345                 LBSR    SEARCH
+4561 2C08             (       omni84.asm):01346                 BGE     LOA2
+4563 338D007F         (       omni84.asm):01347                 LEAU    NOPRG,PCR
+4567 17FA2D           (       omni84.asm):01348                 LBSR    MSG
+456A 39               (       omni84.asm):01349                 RTS
+456B F635A2           (       omni84.asm):01350         LOA2    LDB     ULIST-1
+456E 8E35A3           (       omni84.asm):01351                 LDX     #ULIST
+4571 3085             (       omni84.asm):01352                 LEAX    B,X
+4573 A784             (       omni84.asm):01353                 STA     ,X
+4575 7C35A2           (       omni84.asm):01354                 INC     ULIST-1
+4578 3402             (       omni84.asm):01355                 PSHS    A
+457A 8606             (       omni84.asm):01356                 LDA     #6
+457C 8E35A3           (       omni84.asm):01357                 LDX     #ULIST
+457F 17FECF           (       omni84.asm):01358                 LBSR    LIST
+4582 A6E0             (       omni84.asm):01359                 LDA     ,S+
+4584 9ED7             (       omni84.asm):01360                 LDX     SLIST
+4586 170074           (       omni84.asm):01361                 LBSR    DELL
+4589 9ED7             (       omni84.asm):01362                 LDX     SLIST
+458B 8607             (       omni84.asm):01363                 LDA     #7
+458D 17FEC1           (       omni84.asm):01364                 LBSR    LIST
+4590 8604             (       omni84.asm):01365                 LDA     #4
+4592 308D0004         (       omni84.asm):01366                 LEAX    LOAOK,PCR
+4596 17FA93           (       omni84.asm):01367                 LBSR    PRINT
+4599 39               (       omni84.asm):01368                 RTS
+                      (       omni84.asm):01369         
+459A                  (       omni84.asm):01370         LOAOK
+459A 50524F4752414D20 (       omni84.asm):01371          FCC /PROGRAM LOADED /
+     4C4F4144454420
+45A9 46524F4D20535953 (       omni84.asm):01372          FCC /FROM SYSTEM/
+     54454D
+45B4 0D00             (       omni84.asm):01373          FDB $0D00
+                      (       omni84.asm):01374         
+45B6                  (       omni84.asm):01375         FULL
+45B6 555345522050524F (       omni84.asm):01376          FCC /USER PROGRAM AREA /
+     4752414D20415245
+     4120
+45C8 46554C4C         (       omni84.asm):01377          FCC /FULL/
+45CC 0D00             (       omni84.asm):01378          FDB $0D00
+45CE                  (       omni84.asm):01379         LOADD
+45CE 50524F4752414D20 (       omni84.asm):01380          FCC /PROGRAM ALREADY /
+     414C524541445920
+45DE 4C4F41444544     (       omni84.asm):01381          FCC /LOADED/
+45E4 0D00             (       omni84.asm):01382          FDB $0D00
+45E6                  (       omni84.asm):01383         NOPRG
+45E6 50524F4752414D20 (       omni84.asm):01384          FCC /PROGRAM NOT IN /
+     4E4F5420494E20
+45F5 53595354454D     (       omni84.asm):01385          FCC /SYSTEM/
+45FB 0D00             (       omni84.asm):01386          FDB $0D00
+                      (       omni84.asm):01387         
+                      (       omni84.asm):01388         *DELETE ITEM FROM LIST
+                      (       omni84.asm):01389         *       X=LIST
+                      (       omni84.asm):01390         *       A=ITEM
+                      (       omni84.asm):01391         *
+45FD 1F12             (       omni84.asm):01392         DELL    TFR     X,Y
+45FF E61F             (       omni84.asm):01393                 LDB     -1,X
+4601 5A               (       omni84.asm):01394         DELL0   DECB
+4602 2D0F             (       omni84.asm):01395                 BLT XDELL
+4604 A180             (       omni84.asm):01396                 CMPA    ,X+
+4606 26F9             (       omni84.asm):01397                 BNE     DELL0
+4608 A684             (       omni84.asm):01398         DELL1   LDA     ,X
+460A A71F             (       omni84.asm):01399                 STA     -1,X
+460C 3001             (       omni84.asm):01400                 LEAX    1,X
+460E 5A               (       omni84.asm):01401                 DECB
+460F 2EF7             (       omni84.asm):01402                 BGT     DELL1
+4611 6A3F             (       omni84.asm):01403                 DEC     -1,Y
+4613 39               (       omni84.asm):01404         XDELL   RTS
+                      (       omni84.asm):01405         
+                      (       omni84.asm):01406         *SAVE PROGRAM TO SYSTEM
+                      (       omni84.asm):01407         *       A=PROGRAM CODE
+                      (       omni84.asm):01408         *
+4614 8E35A3           (       omni84.asm):01409         SAV     LDX     #ULIST
+4617 17FF19           (       omni84.asm):01410                 LBSR    SEARCH
+461A 2C08             (       omni84.asm):01411                 BGE     SAV0
+461C 338D0062         (       omni84.asm):01412                 LEAU    NOTIN,PCR
+4620 17F974           (       omni84.asm):01413                 LBSR    MSG
+4623 39               (       omni84.asm):01414                 RTS
+4624 9ED7             (       omni84.asm):01415         SAV0    LDX     SLIST
+4626 17FF0A           (       omni84.asm):01416                 LBSR    SEARCH
+4629 2D08             (       omni84.asm):01417                 BLT     SAV1
+462B 338D006D         (       omni84.asm):01418                 LEAU    INSYS,PCR
+462F 17F965           (       omni84.asm):01419                 LBSR    MSG
+4632 39               (       omni84.asm):01420                 RTS
+4633 9ED7             (       omni84.asm):01421         SAV1    LDX     SLIST
+4635 E61F             (       omni84.asm):01422                 LDB     -1,X
+4637 C10A             (       omni84.asm):01423                 CMPB    #10
+4639 2D08             (       omni84.asm):01424                 BLT     SAV2
+463B 338D0078         (       omni84.asm):01425                 LEAU    SFULL,PCR
+463F 17F955           (       omni84.asm):01426                 LBSR    MSG
+4642 39               (       omni84.asm):01427                 RTS
+4643 5C               (       omni84.asm):01428         SAV2    INCB
+4644 E71F             (       omni84.asm):01429                 STB     -1,X
+4646 3085             (       omni84.asm):01430                 LEAX    B,X
+4648 A71F             (       omni84.asm):01431                 STA     -1,X
+464A 8E35A3           (       omni84.asm):01432                 LDX     #ULIST
+464D 17FFAD           (       omni84.asm):01433                 LBSR    DELL
+4650 8606             (       omni84.asm):01434                 LDA     #6
+4652 8E35A3           (       omni84.asm):01435                 LDX     #ULIST
+4655 17FDF9           (       omni84.asm):01436                 LBSR    LIST
+4658 8607             (       omni84.asm):01437                 LDA     #7
+465A 9ED7             (       omni84.asm):01438                 LDX     SLIST
+465C 17FDF2           (       omni84.asm):01439                 LBSR    LIST
+465F 308D0006         (       omni84.asm):01440                 LEAX    SAVOK,PCR
+4663 8604             (       omni84.asm):01441                 LDA     #4
+4665 17F9C4           (       omni84.asm):01442                 LBSR    PRINT
+4668 39               (       omni84.asm):01443                 RTS
+                      (       omni84.asm):01444         
+4669                  (       omni84.asm):01445         SAVOK
+4669 50524F4752414D20 (       omni84.asm):01446          FCC /PROGRAM SAVED /
+     534156454420
+4677 544F205359535445 (       omni84.asm):01447          FCC /TO SYSTEM/
+     4D
+4680 0D00             (       omni84.asm):01448          FDB $0D00
+                      (       omni84.asm):01449         
+4682                  (       omni84.asm):01450         NOTIN
+4682 4E4F5420494E2055 (       omni84.asm):01451          FCC /NOT IN USER /
+     53455220
+468E 50524F4752414D20 (       omni84.asm):01452          FCC /PROGRAM AREA/
+     41524541
+469A 0D00             (       omni84.asm):01453          FDB $0D00
+                      (       omni84.asm):01454         
+469C                  (       omni84.asm):01455         INSYS
+469C 50524F4752414D20 (       omni84.asm):01456          FCC /PROGRAM ALREADY /
+     414C524541445920
+46AC 494E205359535445 (       omni84.asm):01457          FCC /IN SYSTEM/
+     4D
+46B5 0D00             (       omni84.asm):01458          FDB $0D00
+                      (       omni84.asm):01459         
+46B7                  (       omni84.asm):01460         SFULL
+46B7 53595354454D2050 (       omni84.asm):01461          FCC /SYSTEM PROGRAM /
+     524F4752414D20
+46C6 415245412046554C (       omni84.asm):01462          FCC /AREA FULL/
+     4C
+46CF 0D00             (       omni84.asm):01463          FDB $0D00
+                      (       omni84.asm):01464         
+                      (       omni84.asm):01465         *ENTER NEW NODE
+                      (       omni84.asm):01466         *       A = PORT (0-2)
+                      (       omni84.asm):01467         *
+46D1 8102             (       omni84.asm):01468         ENT     CMPA    #2
+46D3 2308             (       omni84.asm):01469                 BLS     ENT0
+46D5 338D0033         (       omni84.asm):01470                 LEAU    BAD,PCR
+46D9 17F8BB           (       omni84.asm):01471                 LBSR    MSG
+46DC 39               (       omni84.asm):01472                 RTS
+46DD 338D0041         (       omni84.asm):01473         ENT0    LEAU    TLIST,PCR
+46E1 3402             (       omni84.asm):01474                 PSHS    A
+46E3 96BE             (       omni84.asm):01475                 LDA     NODE
+46E5 4A               (       omni84.asm):01476                 DECA
+46E6 C603             (       omni84.asm):01477                 LDB     #3
+46E8 3D               (       omni84.asm):01478                 MUL
+46E9 33CB             (       omni84.asm):01479                 LEAU    D,U
+46EB 3502             (       omni84.asm):01480                 PULS    A
+46ED A6C6             (       omni84.asm):01481                 LDA     A,U
+46EF 8041             (       omni84.asm):01482                 SUBA    #'A
+46F1 4C               (       omni84.asm):01483                 INCA
+46F2 97BE             (       omni84.asm):01484                 STA     NODE
+46F4 4A               (       omni84.asm):01485                 DECA
+46F5 C60B             (       omni84.asm):01486                 LDB     #11
+46F7 3D               (       omni84.asm):01487                 MUL
+46F8 8E35AD           (       omni84.asm):01488                 LDX     #SLISTS
+46FB 308B             (       omni84.asm):01489                 LEAX    D,X
+46FD 3001             (       omni84.asm):01490                 LEAX    1,X
+46FF 9FD7             (       omni84.asm):01491                 STX     SLIST
+4701 1700C3           (       omni84.asm):01492                 LBSR    PRNAME
+4704 9ED7             (       omni84.asm):01493                 LDX     SLIST
+4706 8607             (       omni84.asm):01494                 LDA     #7
+4708 17FD46           (       omni84.asm):01495                 LBSR    LIST
+470B 39               (       omni84.asm):01496                 RTS
+                      (       omni84.asm):01497         
+470C                  (       omni84.asm):01498         BAD
+470C 42414420504F5254 (       omni84.asm):01499          FCC /BAD PORT /
+     20
+4715 44455349474E4154 (       omni84.asm):01500          FCC /DESIGNATION/
+     494F4E
+4720 0D00             (       omni84.asm):01501          FDB $0D00
+                      (       omni84.asm):01502         
+                      (       omni84.asm):01503         *TRANSITION LIST
+                      (       omni84.asm):01504         *
+4722                  (       omni84.asm):01505         TLIST
+4722 42454841434A4244 (       omni84.asm):01506          FCC /BEHACJBDLCENADF/
+     4C43454E414446
+4731 45474F4648514147 (       omni84.asm):01507          FCC /EGOFHQAGIHJRBIK/
+     49484A5242494B
+4740 4A4C53434B4D4C4E (       omni84.asm):01508          FCC /JLSCKMLNTDMOFNP/
+     54444D4F464E50
+474F 4F51544750524951 (       omni84.asm):01509          FCC /OQTGPRIQSKRTMPS/
+     534B52544D5053
+                      (       omni84.asm):01510         
+                      (       omni84.asm):01511         *INVENTORY INITIALIZATION
+                      (       omni84.asm):01512         *
+475E 308D0026         (       omni84.asm):01513         ININIT  LEAX    IDATA,PCR
+4762 108E35AE         (       omni84.asm):01514                 LDY     #SLISTS+1
+4766 8614             (       omni84.asm):01515                 LDA     #20
+4768 3402             (       omni84.asm):01516                 PSHS    A
+476A 6AE4             (       omni84.asm):01517         ININI0  DEC     ,S
+476C 2D17             (       omni84.asm):01518                 BLT     ININI3
+476E 6F3F             (       omni84.asm):01519                 CLR     -1,Y
+4770 109FD7           (       omni84.asm):01520                 STY     SLIST
+4773 5F               (       omni84.asm):01521                 CLRB
+4774 A680             (       omni84.asm):01522         ININI1  LDA     ,X+
+4776 8041             (       omni84.asm):01523                 SUBA    #'A
+4778 2D07             (       omni84.asm):01524                 BLT     ININI2
+477A A7A5             (       omni84.asm):01525                 STA     B,Y
+477C 5C               (       omni84.asm):01526                 INCB
+477D E73F             (       omni84.asm):01527                 STB     -1,Y
+477F 20F3             (       omni84.asm):01528                 BRA     ININI1
+4781 312B             (       omni84.asm):01529         ININI2  LEAY    11,Y
+4783 20E5             (       omni84.asm):01530                 BRA     ININI0
+4785 3502             (       omni84.asm):01531         ININI3  PULS    A
+4787 39               (       omni84.asm):01532                 RTS
+                      (       omni84.asm):01533         
+                      (       omni84.asm):01534         *INVENTORY DATA
+                      (       omni84.asm):01535         *
+4788                  (       omni84.asm):01536         IDATA
+4788 45464748274D2744 (       omni84.asm):01537          FCC /EFGH'M'D'HIJKLM'D'/
+     2748494A4B4C4D27
+     4427
+479A 4445464748494A27 (       omni84.asm):01538          FCC /DEFGHIJ'M'I'H'F'/
+     4D27492748274627
+47AA 4427452746274727 (       omni84.asm):01539          FCC /D'E'F'G'H'/
+     4827
+47B4 4527462747274D27 (       omni84.asm):01540          FCC /E'F'G'M'DEFGHIJKLM'/
+     4445464748494A4B
+     4C4D27
+                      (       omni84.asm):01541         
+                      (       omni84.asm):01542         *PRINT SYSTEM NAME
+                      (       omni84.asm):01543         *
+47C7 308D0019         (       omni84.asm):01544         PRNAME  LEAX    CLR,PCR
+47CB 8604             (       omni84.asm):01545                 LDA     #4
+47CD 17F85C           (       omni84.asm):01546                 LBSR    PRINT
+47D0 170013           (       omni84.asm):01547                 LBSR    GENNAME
+47D3 8604             (       omni84.asm):01548                 LDA     #4
+47D5 17F854           (       omni84.asm):01549                 LBSR    PRINT
+47D8 308D0006         (       omni84.asm):01550                 LEAX    CRLF,PCR
+47DC 8604             (       omni84.asm):01551                 LDA     #4
+47DE 17F84B           (       omni84.asm):01552                 LBSR    PRINT
+47E1 39               (       omni84.asm):01553                 RTS
+                      (       omni84.asm):01554         
+47E2 0D00             (       omni84.asm):01555         CRLF    FDB     $0D00
+47E4 0C00             (       omni84.asm):01556         CLR     FDB     $0C00
+                      (       omni84.asm):01557         
+                      (       omni84.asm):01558         *GENERATE SYSTEM NAME
+                      (       omni84.asm):01559         *
+47E6 308D000C         (       omni84.asm):01560         GENNAME LEAX    NAMES,PCR
+47EA 96BE             (       omni84.asm):01561                 LDA     NODE
+47EC 4A               (       omni84.asm):01562         GENAM0  DECA
+47ED 2706             (       omni84.asm):01563                 BEQ     GENAM2
+47EF E680             (       omni84.asm):01564         GENAM1  LDB     ,X+
+47F1 26FC             (       omni84.asm):01565                 BNE     GENAM1
+47F3 20F7             (       omni84.asm):01566                 BRA     GENAM0
+47F5 39               (       omni84.asm):01567         GENAM2  RTS
+                      (       omni84.asm):01568         
+47F6                  (       omni84.asm):01569         NAMES
+47F6 5345435552495459 (       omni84.asm):01570          FCC /SECURITY CONTROL/
+     20434F4E54524F4C
+4806 00               (       omni84.asm):01571          FCB 0
+4807 534154454C4C4954 (       omni84.asm):01572          FCC /SATELLITE NAVIGATION/
+     45204E4156494741
+     54494F4E
+481B 00               (       omni84.asm):01573          FCB 0
+481C 4E4554574F524B20 (       omni84.asm):01574          FCC /NETWORK CONTROL/
+     434F4E54524F4C
+482B 00               (       omni84.asm):01575          FCB 0
+482C 4C4F47494320434F (       omni84.asm):01576          FCC /LOGIC CONTROL/
+     4E54524F4C
+4839 00               (       omni84.asm):01577          FCB 0
+483A 4D41494E54454E41 (       omni84.asm):01578          FCC /MAINTENANCE CONTROL/
+     4E434520434F4E54
+     524F4C
+484D 00               (       omni84.asm):01579          FCB 0
+484E 415558204D41494E (       omni84.asm):01580          FCC /AUX MAINTENANCE CONTROL/
+     54454E414E434520
+     434F4E54524F4C
+4865 00               (       omni84.asm):01581          FCB 0
+4866 41555820504F5745 (       omni84.asm):01582          FCC /AUX POWER CONTROL/
+     5220434F4E54524F
+     4C
+4877 00               (       omni84.asm):01583          FCB 0
+4878 4155582053454355 (       omni84.asm):01584          FCC /AUX SECURITY CONTROL/
+     5249545920434F4E
+     54524F4C
+488C 00               (       omni84.asm):01585          FCB 0
+488D 4155582053415445 (       omni84.asm):01586          FCC /AUX SATELLITE COMMUNICATIONS/
+     4C4C49544520434F
+     4D4D554E49434154
+     494F4E53
+48A9 00               (       omni84.asm):01587          FCB 0
+48AA 4155582053415445 (       omni84.asm):01588          FCC /AUX SATELLITE NAVIGATION/
+     4C4C495445204E41
+     5649474154494F4E
+48C2 00               (       omni84.asm):01589          FCB 0
+48C3 41555820454E5649 (       omni84.asm):01590          FCC /AUX ENVIRONMENT CONTROL/
+     524F4E4D454E5420
+     434F4E54524F4C
+48DA 00               (       omni84.asm):01591          FCB 0
+48DB 415558204E455457 (       omni84.asm):01592          FCC /AUX NETWORK CONTROL/
+     4F524B20434F4E54
+     524F4C
+48EE 00               (       omni84.asm):01593          FCB 0
+48EF 4155582041434345 (       omni84.asm):01594          FCC /AUX ACCESS COMPUTER/
+     535320434F4D5055
+     544552
+4902 00               (       omni84.asm):01595          FCB 0
+4903 415558204C4F4749 (       omni84.asm):01596          FCC /AUX LOGIC CONTROL/
+     4320434F4E54524F
+     4C
+4914 00               (       omni84.asm):01597          FCB 0
+4915 415558204D454D4F (       omni84.asm):01598          FCC /AUX MEMORY CONTROL/
+     525920434F4E5452
+     4F4C
+4927 00               (       omni84.asm):01599          FCB 0
+4928 4D454D4F52592043 (       omni84.asm):01600          FCC /MEMORY CONTROL/
+     4F4E54524F4C
+4936 00               (       omni84.asm):01601          FCB 0
+4937 504F57455220434F (       omni84.asm):01602          FCC /POWER CONTROL/
+     4E54524F4C
+4944 00               (       omni84.asm):01603          FCB 0
+4945 534154454C4C4954 (       omni84.asm):01604          FCC /SATELLITE COMMUNICATIONS/
+     4520434F4D4D554E
+     49434154494F4E53
+495D 00               (       omni84.asm):01605          FCB 0
+495E 454E5649524F4E4D (       omni84.asm):01606          FCC /ENVIRONMENT CONTROL/
+     454E5420434F4E54
+     524F4C
+4971 00               (       omni84.asm):01607          FCB 0
+4972 4F4D4E4953544152 (       omni84.asm):01608          FCC /OMNISTAR ACCESS COMPUTER/
+     2041434345535320
+     434F4D5055544552
+498A 00               (       omni84.asm):01609          FCB 0
+                      (       omni84.asm):01610         
+                      (       omni84.asm):01611         *DISPLAY SYSTEM MAP
+                      (       omni84.asm):01612         *
+498B 1A10             (       omni84.asm):01613         MAP     ORCC    #$10
+498D B7FFCD           (       omni84.asm):01614                 STA     $FFCD
+4990 B7FFCB           (       omni84.asm):01615                 STA     $FFCB
+4993 1CEF             (       omni84.asm):01616                 ANDCC   #$EF
+4995 39               (       omni84.asm):01617                 RTS
+                      (       omni84.asm):01618         
+                      (       omni84.asm):01619         *DRAW LINES
+                      (       omni84.asm):01620         *       Y=LINE DATA
+                      (       omni84.asm):01621         *
+4996 A6A4             (       omni84.asm):01622         DRAW    LDA     ,Y
+4998 4D               (       omni84.asm):01623                 TSTA
+4999 260D             (       omni84.asm):01624                 BNE     DRAW1
+499B 3121             (       omni84.asm):01625                 LEAY    1,Y
+499D ECA4             (       omni84.asm):01626                 LDD     ,Y
+499F 4D               (       omni84.asm):01627                 TSTA
+49A0 2716             (       omni84.asm):01628                 BEQ     XDRAW
+49A2 8D15             (       omni84.asm):01629                 BSR     GETXY
+49A4 DDBF             (       omni84.asm):01630                 STD     X1
+49A6 20EE             (       omni84.asm):01631                 BRA     DRAW
+49A8 8D0F             (       omni84.asm):01632         DRAW1   BSR     GETXY
+49AA DDC1             (       omni84.asm):01633                 STD     X2
+49AC 3420             (       omni84.asm):01634                 PSHS    Y
+49AE 17006D           (       omni84.asm):01635                 LBSR    LINE
+49B1 1700FB           (       omni84.asm):01636                 LBSR    SQUARE
+49B4 3520             (       omni84.asm):01637                 PULS    Y
+49B6 20DE             (       omni84.asm):01638                 BRA     DRAW
+49B8 39               (       omni84.asm):01639         XDRAW   RTS
+                      (       omni84.asm):01640         
+49B9 ECA1             (       omni84.asm):01641         GETXY   LDD     ,Y++
+49BB 39               (       omni84.asm):01642                 RTS
+                      (       omni84.asm):01643         
+49BC                  (       omni84.asm):01644         LINES
+                      (       omni84.asm):01645         *INNER RING
+49BC 00               (       omni84.asm):01646                 FCB 0
+49BD 6E70             (       omni84.asm):01647                 FDB $6E70
+49BF 634F             (       omni84.asm):01648                 FDB $634F
+49C1 7F3A             (       omni84.asm):01649                 FDB $7F3A
+49C3 9C4E             (       omni84.asm):01650                 FDB $9C4E
+49C5 9170             (       omni84.asm):01651                 FDB $9170
+49C7 6E70             (       omni84.asm):01652                 FDB $6E70
+                      (       omni84.asm):01653         *MIDDLE RING
+49C9 00               (       omni84.asm):01654                 FCB 0
+49CA BC6C             (       omni84.asm):01655                 FDB $BC6C
+49CC 7F97             (       omni84.asm):01656                 FDB $7F97
+49CE 426B             (       omni84.asm):01657                 FDB $426B
+49D0 5A23             (       omni84.asm):01658                 FDB $5A23
+49D2 A623             (       omni84.asm):01659                 FDB $A623
+49D4 BC6C             (       omni84.asm):01660                 FDB $BC6C
+                      (       omni84.asm):01661         *OUTER RING
+49D6 00               (       omni84.asm):01662                 FCB 0
+49D7 DD76             (       omni84.asm):01663                 FDB $DD76
+49D9 7FB9             (       omni84.asm):01664                 FDB $7FB9
+49DB 2276             (       omni84.asm):01665                 FDB $2276
+49DD 4608             (       omni84.asm):01666                 FDB $4608
+49DF B908             (       omni84.asm):01667                 FDB $B908
+49E1 DD76             (       omni84.asm):01668                 FDB $DD76
+                      (       omni84.asm):01669         *MIDDLE TO OUTER
+49E3 00               (       omni84.asm):01670                 FCB 0
+49E4 BC6C             (       omni84.asm):01671                 FDB $BC6C
+49E6 DD76             (       omni84.asm):01672                 FDB $DD76
+49E8 00               (       omni84.asm):01673                 FCB 0
+49E9 7F97             (       omni84.asm):01674                 FDB $7F97
+49EB 7FB9             (       omni84.asm):01675                 FDB $7FB9
+49ED 00               (       omni84.asm):01676                 FCB 0
+49EE 426B             (       omni84.asm):01677                 FDB $426B
+49F0 2276             (       omni84.asm):01678                 FDB $2276
+49F2 00               (       omni84.asm):01679                 FCB 0
+49F3 5A23             (       omni84.asm):01680                 FDB $5A23
+49F5 4608             (       omni84.asm):01681                 FDB $4608
+49F7 00               (       omni84.asm):01682                 FCB 0
+49F8 A623             (       omni84.asm):01683                 FDB $A623
+49FA B908             (       omni84.asm):01684                 FDB $B908
+                      (       omni84.asm):01685         *INNER TO MIDDLE
+49FC 00               (       omni84.asm):01686                 FCB 0
+49FD 6E70             (       omni84.asm):01687                 FDB $6E70
+49FF 6181             (       omni84.asm):01688                 FDB $6181
+4A01 00               (       omni84.asm):01689                 FCB 0
+4A02 634F             (       omni84.asm):01690                 FDB $634F
+4A04 4E47             (       omni84.asm):01691                 FDB $4E47
+4A06 00               (       omni84.asm):01692                 FCB 0
+4A07 7F3A             (       omni84.asm):01693                 FDB $7F3A
+4A09 7F23             (       omni84.asm):01694                 FDB $7F23
+4A0B 00               (       omni84.asm):01695                 FCB 0
+4A0C 9C4E             (       omni84.asm):01696                 FDB $9C4E
+4A0E B148             (       omni84.asm):01697                 FDB $B148
+4A10 00               (       omni84.asm):01698                 FCB 0
+4A11 9170             (       omni84.asm):01699                 FDB $9170
+4A13 9D82             (       omni84.asm):01700                 FDB $9D82
+                      (       omni84.asm):01701         *MASTER
+4A15 00               (       omni84.asm):01702                 FCB 0
+4A16 7F3A             (       omni84.asm):01703                 FDB $7F3A
+4A18 7F58             (       omni84.asm):01704                 FDB $7F58
+                      (       omni84.asm):01705         
+4A1A 0000             (       omni84.asm):01706                 FDB 0
+4A1C 0000             (       omni84.asm):01707                 FDB 0
+                      (       omni84.asm):01708         
+                      (       omni84.asm):01709         *DRAW LINE
+                      (       omni84.asm):01710         *       CO-ORDS IN
+                      (       omni84.asm):01711         *       X1,Y1,X2,Y2
+                      (       omni84.asm):01712         *
+4A1E 3275             (       omni84.asm):01713         LINE    LEAS    -11,S
+4A20 6F61             (       omni84.asm):01714                 CLR     1,S
+4A22 6F64             (       omni84.asm):01715                 CLR     4,S
+4A24 8601             (       omni84.asm):01716                 LDA     #1
+4A26 A762             (       omni84.asm):01717                 STA     2,S
+4A28 A763             (       omni84.asm):01718                 STA     3,S
+4A2A 4F               (       omni84.asm):01719                 CLRA
+4A2B D6C0             (       omni84.asm):01720                 LDB     Y1
+4A2D ED67             (       omni84.asm):01721                 STD     7,S
+4A2F D6C2             (       omni84.asm):01722                 LDB     Y2
+4A31 A367             (       omni84.asm):01723                 SUBD    7,S
+4A33 ED67             (       omni84.asm):01724                 STD     7,S
+4A35 4F               (       omni84.asm):01725                 CLRA
+4A36 D6BF             (       omni84.asm):01726                 LDB     X1
+4A38 ED65             (       omni84.asm):01727                 STD     5,S
+4A3A D6C1             (       omni84.asm):01728                 LDB     X2
+4A3C A365             (       omni84.asm):01729                 SUBD    5,S
+4A3E ED65             (       omni84.asm):01730                 STD     5,S
+4A40 2C0A             (       omni84.asm):01731                 BGE     L6090
+4A42 86FF             (       omni84.asm):01732                 LDA     #255
+4A44 A763             (       omni84.asm):01733                 STA     3,S
+4A46 4F               (       omni84.asm):01734                 CLRA
+4A47 5F               (       omni84.asm):01735                 CLRB
+4A48 A365             (       omni84.asm):01736                 SUBD    5,S
+4A4A ED65             (       omni84.asm):01737                 STD     5,S
+4A4C EC67             (       omni84.asm):01738         L6090   LDD     7,S
+4A4E 2C0A             (       omni84.asm):01739                 BGE     L6120
+4A50 4F               (       omni84.asm):01740                 CLRA
+4A51 5F               (       omni84.asm):01741                 CLRB
+4A52 A367             (       omni84.asm):01742                 SUBD    7,S
+4A54 ED67             (       omni84.asm):01743                 STD     7,S
+4A56 86FF             (       omni84.asm):01744                 LDA     #255
+4A58 A762             (       omni84.asm):01745                 STA     2,S
+4A5A EC65             (       omni84.asm):01746         L6120   LDD     5,S
+4A5C 10A367           (       omni84.asm):01747                 CMPD    7,S
+4A5F 2C16             (       omni84.asm):01748                 BGE     L6200
+4A61 AE65             (       omni84.asm):01749                 LDX     5,S
+4A63 10AE67           (       omni84.asm):01750                 LDY     7,S
+4A66 AF67             (       omni84.asm):01751                 STX     7,S
+4A68 10AF65           (       omni84.asm):01752                 STY     5,S
+4A6B A663             (       omni84.asm):01753                 LDA     3,S
+4A6D A761             (       omni84.asm):01754                 STA     1,S
+4A6F 6F63             (       omni84.asm):01755                 CLR     3,S
+4A71 A662             (       omni84.asm):01756                 LDA     2,S
+4A73 A764             (       omni84.asm):01757                 STA     4,S
+4A75 6F62             (       omni84.asm):01758                 CLR     2,S
+4A77 EC65             (       omni84.asm):01759         L6200   LDD     5,S
+4A79 E7E4             (       omni84.asm):01760                 STB     ,S
+4A7B 44               (       omni84.asm):01761                 LSRA
+4A7C 56               (       omni84.asm):01762                 RORB
+4A7D ED69             (       omni84.asm):01763                 STD     9,S
+4A7F 96C0             (       omni84.asm):01764         LLOOP   LDA     Y1
+4A81 D6BF             (       omni84.asm):01765                 LDB     X1
+4A83 17F726           (       omni84.asm):01766                 LBSR    PSET
+4A86 6AE4             (       omni84.asm):01767                 DEC     ,S
+4A88 2D22             (       omni84.asm):01768                 BLT     LDONE
+4A8A EC63             (       omni84.asm):01769                 LDD     3,S
+4A8C 9BBF             (       omni84.asm):01770                 ADDA    X1
+4A8E DBC0             (       omni84.asm):01771                 ADDB    Y1
+4A90 97BF             (       omni84.asm):01772                 STA     X1
+4A92 D7C0             (       omni84.asm):01773                 STB     Y1
+4A94 EC69             (       omni84.asm):01774                 LDD     9,S
+4A96 E367             (       omni84.asm):01775                 ADDD    7,S
+4A98 ED69             (       omni84.asm):01776                 STD     9,S
+4A9A A365             (       omni84.asm):01777                 SUBD    5,S
+4A9C 2FE1             (       omni84.asm):01778                 BLE     LLOOP
+4A9E ED69             (       omni84.asm):01779                 STD     9,S
+4AA0 EC61             (       omni84.asm):01780                 LDD     1,S
+4AA2 9BBF             (       omni84.asm):01781                 ADDA    X1
+4AA4 DBC0             (       omni84.asm):01782                 ADDB    Y1
+4AA6 97BF             (       omni84.asm):01783                 STA     X1
+4AA8 D7C0             (       omni84.asm):01784                 STB     Y1
+4AAA 20D3             (       omni84.asm):01785                 BRA     LLOOP
+4AAC 326B             (       omni84.asm):01786         LDONE   LEAS    11,S
+4AAE 39               (       omni84.asm):01787                 RTS
+                      (       omni84.asm):01788         
+                      (       omni84.asm):01789         *DRAW NODE ON MAP
+                      (       omni84.asm):01790         *
+4AAF DCBF             (       omni84.asm):01791         SQUARE  LDD     X1
+4AB1 C002             (       omni84.asm):01792                 SUBB    #2
+4AB3 D7C0             (       omni84.asm):01793                 STB     Y1
+4AB5 8B02             (       omni84.asm):01794                 ADDA    #2
+4AB7 DDC1             (       omni84.asm):01795                 STD     X2
+4AB9 17FF62           (       omni84.asm):01796                 LBSR    LINE
+4ABC DCBF             (       omni84.asm):01797                 LDD     X1
+4ABE CB04             (       omni84.asm):01798                 ADDB    #4
+4AC0 DDC1             (       omni84.asm):01799                 STD     X2
+4AC2 17FF59           (       omni84.asm):01800                 LBSR    LINE
+4AC5 DCBF             (       omni84.asm):01801                 LDD     X1
+4AC7 8004             (       omni84.asm):01802                 SUBA    #4
+4AC9 DDC1             (       omni84.asm):01803                 STD     X2
+4ACB 17FF50           (       omni84.asm):01804                 LBSR    LINE
+4ACE DCBF             (       omni84.asm):01805                 LDD     X1
+4AD0 C004             (       omni84.asm):01806                 SUBB    #4
+4AD2 DDC1             (       omni84.asm):01807                 STD     X2
+4AD4 17FF47           (       omni84.asm):01808                 LBSR    LINE
+4AD7 DCBF             (       omni84.asm):01809                 LDD     X1
+4AD9 8B02             (       omni84.asm):01810                 ADDA    #2
+4ADB DDC1             (       omni84.asm):01811                 STD     X2
+4ADD 17FF3E           (       omni84.asm):01812                 LBSR    LINE
+4AE0 0CC0             (       omni84.asm):01813                 INC     Y1
+4AE2 0CC0             (       omni84.asm):01814                 INC     Y1
+4AE4 39               (       omni84.asm):01815                 RTS
+                      (       omni84.asm):01816         
+                      (       omni84.asm):01817         *BUILD SYSTEM MAP
+                      (       omni84.asm):01818         *
+4AE5 CC1C00           (       omni84.asm):01819         BLDMAP  LDD     #$1C00
+4AE8 DDC3             (       omni84.asm):01820                 STD     SCRN
+4AEA 17F185           (       omni84.asm):01821                 LBSR    PCLS
+4AED 318DFECB         (       omni84.asm):01822                 LEAY    LINES,PCR
+4AF1 17FEA2           (       omni84.asm):01823                 LBSR    DRAW
+4AF4 CC0400           (       omni84.asm):01824                 LDD     #$400
+4AF7 DDC3             (       omni84.asm):01825                 STD     SCRN
+4AF9 39               (       omni84.asm):01826                 RTS
+                      (       omni84.asm):01827         
+4AFA                  (       omni84.asm):01828         ZPROG
+                      (       omni84.asm):01829                 END     START
