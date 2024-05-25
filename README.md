@@ -1,6 +1,8 @@
 OMNI84
 ==========
 
+![](images/listing.jpg)
+
 Rummaging through my 1980s-era notes and documents while at my table at CocoFEST, I made an interesting discovery.
 
 Omnistar was a game I was working on but never finished.  Much later I developed my game Omnistar based on the
@@ -36,3 +38,5 @@ RUN is stubbed out; it just echos back COMMAND OKAY.
 
 Warning: this is just a historical curiosity; it’s not anything near a playable game.
 I have no plans to complete this; I was just curious to see what it looked like.
+
+![](images/gameplay.jpg)
