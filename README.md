@@ -5,7 +5,8 @@ OMNI84
 
 Rummaging through my 1980s-era notes and documents while at my table at CocoFEST, I made an interesting discovery.
 
-Omnistar was a game I was working on but never finished.  Much later I developed my game Omnistar based on the
+Omnistar was a game I was working on but never finished.  Much later I developed my
+game [Omnistar](https://rickadams.itch.io/omnistar) based on the
 memories of what I had in mind.  But after I’d finished, I found my old notes for the game, which showed that it was
 planned to be much more elaborate than what I remembered.
 
