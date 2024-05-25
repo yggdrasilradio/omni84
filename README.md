@@ -27,6 +27,8 @@ I don’t remember why I quit development on this.  Maybe it was the announcemen
 
 Based on the code, it was developed before the Coco3 came out, using an EDTASM+ cartridge.  The font is based on the old IBM OCR font.
 
+I've included PDF scans of the listing we started with, which has interesting scribbled margin notes.
+
 Commands:
 
 * `ENTER PORT1` (or `PORT2` or `PORT3`)
