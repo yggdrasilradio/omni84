@@ -38,6 +38,9 @@ SLISTS	RMB	20*11
 START	ORCC	#$50
 	CLRB
 	TFR	B,DP
+	ldd	#$400
+	std	SCRN
+	lbsr	PCLS
 	JSR	$A9A2
 	JSR	$A976
 	LDA	#$F8
@@ -52,6 +55,9 @@ START	ORCC	#$50
 	LBSR	ININIT
 	LBSR	PCLS
 	LBSR	WINIT
+	ldx	SLIST
+	lda	#5
+	lbsr	PRNAME
 	LDX	SLIST
 	LDA	#7
 	LBSR	LIST
@@ -82,8 +88,16 @@ AGAIN	LBSR	KEYIN
 	LBSR	PARSE
 	LBSR	DISP
 	BRA	AGAIN
-QUIT	ORCC	#$50
-	SWI
+QUIT	*ORCC	#$50
+	*SWI
+	ldd #$0088	; hard reset to RSDOS
+	tfr a,dp	; set direct page 0
+	sta $FEED	; reestablish interrupt vectors on startup
+	sta $ff90	; turn off MMU
+	sta $ffd8	; slow CPU
+	sta $ffde	; turn on ROMs
+	sta $71		; force hard reset
+	jmp [$fffe]	; jump thru reset vector
 
 *CLEAR ENTIRE SCREEN
 *
